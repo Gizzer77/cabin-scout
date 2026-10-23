@@ -22,7 +22,7 @@ Your browser opens the **setup wizard** at <http://localhost:3000/setup.html>. I
 
 1. **Your land:** search an address, tap the map, or use your GPS.
 2. **Your hunt:** season dates, tag count, house-distance warning (all optional).
-3. **Free power-ups:** a guided walkthrough for a free AI advisor key (Google Gemini) and a free Telegram bot, each with a Test button. Skip any you don't want.
+3. **Free power-ups:** a guided walkthrough for property lines (Regrid), a free AI advisor key (Google Gemini) and a free Telegram bot, each with a Test button. Skip any you don't want.
 4. **Demo property:** keep this checked to explore every feature with fake stands, cameras and sightings.
 
 After that, `npm start` goes straight to the app.
@@ -50,7 +50,7 @@ Put these in `.env` (copy `.env.example`) or paste them into the wizard. Each is
 | `ANTHROPIC_API_KEY` | Claude advisor and photo reading (paid, used instead of Gemini if set) | console.anthropic.com |
 | `TELEGRAM_BOT_TOKEN` | **Free** phone Scout Log through a Telegram bot | Message [@BotFather](https://t.me/BotFather) |
 | `GOOGLE_MAPS_API_KEY` | Place autocomplete, elevation | Google Cloud console |
-| `REGRID_TOKEN` | Parcel lines outside Massachusetts | regrid.com |
+| `REGRID_TOKEN` | **Real property lines** anywhere in the US (free trial); Massachusetts works without it, elsewhere you can draw your boundary by hand | [regrid.com/api](https://regrid.com/api) |
 | `CABINSCOUT_PORT` | Run on another port (default 3000) | n/a |
 
 Without keys it uses free sources: Esri and OpenTopo tiles, OpenStreetMap search, Open-Meteo weather and elevation, MassGIS parcels for Massachusetts, and a built-in rule-based advisor.

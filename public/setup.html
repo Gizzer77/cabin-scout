@@ -76,12 +76,17 @@ label.chk{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}s
     <h2>Free power-ups</h2>
     <div class="hint">The app already works without any of these. Each one takes about a minute and is free. Keys stay in the <code>.env</code> file on this computer. Skip any you don't want.</div>
 
-    <div class="opt"><b>1. AI hunting advisor <span class="tag free">FREE</span></b>
+    <div class="opt"><b>1. Property lines (parcel map) <span class="tag free">FREE TRIAL</span></b>
+      <small>Click any spot on the map and get the real lot lines, owner and acreage. Massachusetts works with no key. Everywhere else needs a Regrid token, or you can draw your boundary by hand (also free).</small>
+      <ol class="how"><li><a href="https://regrid.com/api" target="_blank" rel="noopener">Open Regrid API</a> and create a free account.</li><li>Start the free trial and copy your API token.</li><li>Paste it below.</li></ol>
+      <input id="k_regrid" type="password" placeholder="token" autocomplete="off"></div>
+
+    <div class="opt"><b>2. AI hunting advisor <span class="tag free">FREE</span></b>
       <small>Ask "where should I sit Saturday?" and let it read your trail-cam and scouting photos. Uses Google Gemini's free tier.</small>
       <ol class="how"><li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Open Google AI Studio</a> and sign in with any Google account.</li><li>Click <b>Create API key</b>, then copy it.</li><li>Paste it below.</li></ol>
       <div class="row"><input id="k_gemini" type="password" placeholder="AIza..." autocomplete="off"><button class="btn tst" data-t="gemini" style="flex:none">Test key</button></div><div class="res" id="r_gemini"></div></div>
 
-    <div class="opt"><b>2. Phone Scout Log <span class="tag free">FREE</span></b>
+    <div class="opt"><b>3. Phone Scout Log <span class="tag free">FREE</span></b>
       <small>Send photos, locations and notes from the woods with a Telegram bot of your own.</small>
       <ol class="how"><li>Install Telegram, then open <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>.</li><li>Send <b>/newbot</b>, pick a name, and copy the token it gives you.</li><li>Paste it below. After setup, run <code>npm run mobile</code> and message your bot once.</li></ol>
       <div class="row"><input id="k_telegram" type="password" placeholder="123456:ABC..." autocomplete="off"><button class="btn tst" data-t="telegram" style="flex:none">Test token</button></div><div class="res" id="r_telegram"></div></div>
@@ -90,7 +95,6 @@ label.chk{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}s
       <label>Claude (paid, replaces Gemini if set)</label><div class="row"><input id="k_anthropic" type="password" placeholder="sk-ant-..." autocomplete="off"><button class="btn tst" data-t="anthropic" style="flex:none">Test key</button></div><div class="res" id="r_anthropic"></div>
       <small>Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>.</small>
       <label>Google Maps key (better place search, elevation)</label><input id="k_google" type="password" placeholder="AIza..." autocomplete="off">
-      <label>Regrid token (parcel lines outside Massachusetts)</label><input id="k_regrid" type="password" placeholder="token" autocomplete="off"><small>Free trial at <a href="https://regrid.com/api" target="_blank" rel="noopener">regrid.com/api</a>.</small>
     </details>
 
     <label class="chk"><input type="checkbox" id="demo" checked><span>Also add the <b>Demo Property</b> so I can explore every feature with sample sightings and stands. You can delete it any time.</span></label>
