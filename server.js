@@ -367,8 +367,19 @@ async function api(req, res, url) {
     return;
   }
 
+
+  if (seg[0] === 'setup' && seg[1] === 'test' && m === 'POST') {
+    const b = await readBody(req), key = String(b.key || '').trim();
+    if (!/^[\w:.\-]{8,200}$/.test(key)) return send(res, 200, { ok: false, msg: 'That does not look like a key. Check for extra spaces.' });
+    try {
+      if (b.type === 'gemini') { const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models', { headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(10000) }); return send(res, 200, r.ok ? { ok: true, msg: 'Key works.' } : { ok: false, msg: 'Google rejected that key (' + r.status + ').' }); }
+      if (b.type === 'telegram') { const j = await (await fetch(`https://api.telegram.org/bot${key}/getMe`, { signal: AbortSignal.timeout(10000) })).json(); return send(res, 200, j.ok ? { ok: true, msg: 'Bot found: @' + j.result.username } : { ok: false, msg: 'Telegram rejected that token.' }); }
+      if (b.type === 'anthropic') { const r = await fetch('https://api.anthropic.com/v1/models', { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, signal: AbortSignal.timeout(10000) }); return send(res, 200, r.ok ? { ok: true, msg: 'Key works.' } : { ok: false, msg: 'Anthropic rejected that key (' + r.status + ').' }); }
+    } catch (e) { return send(res, 200, { ok: false, msg: 'Could not reach the service. Check your internet.' }); }
+    return send(res, 200, { ok: true, msg: 'Saved without a test.' });
+  }
   if (seg[0] === 'setup') {
-    const KEYS = { anthropic: 'ANTHROPIC_API_KEY', google: 'GOOGLE_MAPS_API_KEY', regrid: 'REGRID_TOKEN', telegram: 'TELEGRAM_BOT_TOKEN' };
+    const KEYS = { anthropic: 'ANTHROPIC_API_KEY', google: 'GOOGLE_MAPS_API_KEY', regrid: 'REGRID_TOKEN', telegram: 'TELEGRAM_BOT_TOKEN', gemini: 'GEMINI_API_KEY' };
     if (m === 'GET') return send(res, 200, { done: !!store.state.setupDone, properties: store.state.properties.length, keys: Object.fromEntries(Object.entries(KEYS).map(([k, v]) => [k, !!process.env[v]])), scout: Scout.getSettings() });
     if (m === 'POST') {
       const b = await readBody(req);
@@ -388,7 +399,7 @@ async function api(req, res, url) {
   }
   if (seg[0] === 'config' && m === 'GET') {
     const origin = `http://${req.headers.host}`;
-    return send(res, 200, { googleMapsKey: process.env.GOOGLE_MAPS_API_KEY || '', hasClaude: !!process.env.ANTHROPIC_API_KEY,
+    return send(res, 200, { googleMapsKey: process.env.GOOGLE_MAPS_API_KEY || '', hasClaude: !!process.env.ANTHROPIC_API_KEY, hasAI: !!(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY), aiName: process.env.ANTHROPIC_API_KEY ? 'CLAUDE ADVISOR' : process.env.GEMINI_API_KEY ? 'GEMINI ADVISOR' : 'LOCAL ADVISOR',
       mcp: { url: origin + '/api/mcp', token: store.state.token, enabled: store.state.mcpEnabled, clients: [...store.mcp.clients.values()].map((c) => c.name), calls: store.mcp.calls, lastCall: store.mcp.lastCall, tools: S.TOOLS.map((t) => t.name) } });
   }
   if (seg[0] === 'mcp-toggle' && m === 'POST') {

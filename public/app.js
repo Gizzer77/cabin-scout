@@ -1585,7 +1585,7 @@ function connectEvents() {
 (async function boot() {
   try {
     S.cfg = await api('/config');
-    $('#advisor').textContent = S.cfg.hasClaude ? 'CLAUDE ADVISOR' : 'LOCAL ADVISOR';
+    $('#advisor').textContent = S.cfg.aiName || 'LOCAL ADVISOR';
     setBase(S.base);
     if (S.cfg.googleMapsKey) { const s = document.createElement('script'); s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(S.cfg.googleMapsKey) + '&libraries=places'; s.async = true; document.head.appendChild(s); }
     const st = await api('/state'); S.props = st.properties; S.prop = S.props.find((p) => p.id === st.activeProperty) || S.props[0]; S.activeId = S.prop ? S.prop.id : null;

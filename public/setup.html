@@ -30,12 +30,12 @@ input:focus,select:focus{border-color:var(--amber)}
 #map{height:280px;border-radius:8px;border:1px solid var(--line);margin-top:12px}
 .hint{font-size:13px;color:var(--mute);margin-top:6px}
 .opt{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:12px;background:#241b13}
-.opt b{display:block}.opt small{color:var(--mute)}
+.opt>b:first-child{display:block}.opt small{color:var(--mute)}
 .opt a{color:var(--amber)}
 .hide{display:none}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px}.chk input{width:auto;margin-top:4px}
 .err{color:#fca5a5;margin-top:10px;min-height:1em}
-ul.ok{padding-left:18px;color:var(--mute)}
+label.chk{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}summary b{display:inline!important}ol.how{margin:10px 0 10px;padding-left:20px;color:var(--ink)}ol.how li{margin:3px 0}.tag.free{display:inline-block;background:#26391b;color:#b7e08f;border:1px solid #4d7a33;border-radius:4px;font-size:10px;padding:1px 6px;letter-spacing:.08em;vertical-align:middle;margin-left:6px}.res{min-height:1em;font-size:13px;margin-top:6px}.res.ok{color:#b7e08f}.res.bad{color:#fca5a5}details summary{cursor:pointer}details label{margin-top:12px}ul.ok{padding-left:18px;color:var(--mute)}
 </style>
 </head>
 <body>
@@ -73,15 +73,29 @@ ul.ok{padding-left:18px;color:var(--mute)}
   </div>
 
   <div class="card hide" data-step="3">
-    <h2>Optional extras</h2>
-    <div class="hint">Skip everything here and the app still works. Keys are saved only to the <code>.env</code> file on this computer.</div>
-    <div class="opt"><b>AI field advisor (Anthropic)</b><small>Smarter stand and wind advice, plus reading photos. Get a key at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>. Usage is billed to your account.</small><input id="k_anthropic" type="password" placeholder="sk-ant-..." autocomplete="off"></div>
-    <div class="opt"><b>Telegram Scout Log bot</b><small>Send photos and locations from the field. Create a bot with <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, paste its token. Needs a restart after setup.</small><input id="k_telegram" type="password" placeholder="123456:ABC..." autocomplete="off"></div>
-    <div class="opt"><b>Google Maps key</b><small>Better place search and elevation. Optional.</small><input id="k_google" type="password" placeholder="AIza..." autocomplete="off"></div>
-    <div class="opt"><b>Regrid token</b><small>Parcel lines outside Massachusetts. Optional (<a href="https://regrid.com/api" target="_blank" rel="noopener">regrid.com</a>).</small><input id="k_regrid" type="password" placeholder="token" autocomplete="off"></div>
+    <h2>Free power-ups</h2>
+    <div class="hint">The app already works without any of these. Each one takes about a minute and is free. Keys stay in the <code>.env</code> file on this computer. Skip any you don't want.</div>
+
+    <div class="opt"><b>1. AI hunting advisor <span class="tag free">FREE</span></b>
+      <small>Ask "where should I sit Saturday?" and let it read your trail-cam and scouting photos. Uses Google Gemini's free tier.</small>
+      <ol class="how"><li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Open Google AI Studio</a> and sign in with any Google account.</li><li>Click <b>Create API key</b>, then copy it.</li><li>Paste it below.</li></ol>
+      <div class="row"><input id="k_gemini" type="password" placeholder="AIza..." autocomplete="off"><button class="btn tst" data-t="gemini" style="flex:none">Test key</button></div><div class="res" id="r_gemini"></div></div>
+
+    <div class="opt"><b>2. Phone Scout Log <span class="tag free">FREE</span></b>
+      <small>Send photos, locations and notes from the woods with a Telegram bot of your own.</small>
+      <ol class="how"><li>Install Telegram, then open <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>.</li><li>Send <b>/newbot</b>, pick a name, and copy the token it gives you.</li><li>Paste it below. After setup, run <code>npm run mobile</code> and message your bot once.</li></ol>
+      <div class="row"><input id="k_telegram" type="password" placeholder="123456:ABC..." autocomplete="off"><button class="btn tst" data-t="telegram" style="flex:none">Test token</button></div><div class="res" id="r_telegram"></div></div>
+
+    <details class="opt"><summary><b>More (optional)</b></summary>
+      <label>Claude (paid, replaces Gemini if set)</label><div class="row"><input id="k_anthropic" type="password" placeholder="sk-ant-..." autocomplete="off"><button class="btn tst" data-t="anthropic" style="flex:none">Test key</button></div><div class="res" id="r_anthropic"></div>
+      <small>Get one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>.</small>
+      <label>Google Maps key (better place search, elevation)</label><input id="k_google" type="password" placeholder="AIza..." autocomplete="off">
+      <label>Regrid token (parcel lines outside Massachusetts)</label><input id="k_regrid" type="password" placeholder="token" autocomplete="off"><small>Free trial at <a href="https://regrid.com/api" target="_blank" rel="noopener">regrid.com/api</a>.</small>
+    </details>
+
     <label class="chk"><input type="checkbox" id="demo" checked><span>Also add the <b>Demo Property</b> so I can explore every feature with sample sightings and stands. You can delete it any time.</span></label>
     <div class="err" id="err"></div>
-    <div class="nav"><button class="btn" data-back>Back</button><button class="btn go" id="finish">Finish setup</button></div>
+    <div class="nav"><button class="btn" data-back>Back</button><button class="btn go" id="finish">Start my hunting app</button></div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -128,12 +142,16 @@ $('#finish').onclick = async () => {
     const demo = $('#demo').checked;
     if (!pick && !demo) throw new Error('Pick your land on step 2, or keep the demo property checked.');
     if (pick) await post('/api/properties', { name: $('#pname').value.trim() || 'My Property', lat: pick.lat, lng: pick.lng });
-    const keys = {}; ['anthropic', 'telegram', 'google', 'regrid'].forEach((k) => (keys[k] = $('#k_' + k).value));
+    const keys = {}; ['gemini', 'anthropic', 'telegram', 'google', 'regrid'].forEach((k) => (keys[k] = $('#k_' + k).value));
     const r = await post('/api/setup', { demo, keys, scout: { seasonName: $('#sname').value, seasonStart: $('#sstart').value, seasonEnd: $('#send').value, tagsTotal: $('#tags').value, houseYd: $('#house').value } });
     if (r.restart) alert('Telegram token saved. Stop the server (Ctrl+C) and run npm start again to turn the bot on.');
     location.href = '/';
   } catch (e) { $('#err').textContent = e.message; btn.disabled = false; }
 };
+document.querySelectorAll('.tst').forEach((b) => (b.onclick = async () => {
+  const t = b.dataset.t, out = $('#r_' + t); out.className = 'res'; out.textContent = 'Testing...';
+  try { const r = await post('/api/setup/test', { type: t, key: $('#k_' + t).value }); out.textContent = r.msg; out.className = 'res ' + (r.ok ? 'ok' : 'bad'); } catch (e) { out.textContent = e.message; out.className = 'res bad'; }
+}));
 show(0);
 </script>
 </body>

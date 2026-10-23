@@ -22,7 +22,7 @@ Your browser opens the **setup wizard** at <http://localhost:3000/setup.html>. I
 
 1. **Your land:** search an address, tap the map, or use your GPS.
 2. **Your hunt:** season dates, tag count, house-distance warning (all optional).
-3. **Optional extras:** paste your own API keys if you want them (see below).
+3. **Free power-ups:** a guided walkthrough for a free AI advisor key (Google Gemini) and a free Telegram bot, each with a Test button. Skip any you don't want.
 4. **Demo property:** keep this checked to explore every feature with fake stands, cameras and sightings.
 
 After that, `npm start` goes straight to the app.
@@ -46,8 +46,9 @@ Put these in `.env` (copy `.env.example`) or paste them into the wizard. Each is
 
 | Variable | Unlocks | Where to get it |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Smarter advisor, photo reading | console.anthropic.com |
-| `TELEGRAM_BOT_TOKEN` | Phone Scout Log through a Telegram bot | Message [@BotFather](https://t.me/BotFather) |
+| `GEMINI_API_KEY` | **Free** AI advisor and photo reading | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| `ANTHROPIC_API_KEY` | Claude advisor and photo reading (paid, used instead of Gemini if set) | console.anthropic.com |
+| `TELEGRAM_BOT_TOKEN` | **Free** phone Scout Log through a Telegram bot | Message [@BotFather](https://t.me/BotFather) |
 | `GOOGLE_MAPS_API_KEY` | Place autocomplete, elevation | Google Cloud console |
 | `REGRID_TOKEN` | Parcel lines outside Massachusetts | regrid.com |
 | `CABINSCOUT_PORT` | Run on another port (default 3000) | n/a |

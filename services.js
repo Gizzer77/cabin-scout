@@ -1,5 +1,6 @@
 /* Data services, MCP tool implementations and the tactical advisor. */
 const P = require('./public/physics.js');
+const Gemini = require('./gemini.js');
 const Wild = require('./wildlife.js');
 
 const GRID_N = 17, GRID_SPACING = 60;
@@ -547,6 +548,8 @@ async function chat(store, { message, propertyId, history = [] }) {
   const p = getProp(propertyId);
   if (process.env.ANTHROPIC_API_KEY) {
     try { return await claudeChat(store, p, message, history, impl); } catch (e) { console.warn('[chat] Claude failed, using local advisor:', e.message); }
+  } else if (Gemini.enabled()) {
+    try { return await geminiChat(p, message, history, impl); } catch (e) { console.warn('[chat] Gemini failed, using local advisor:', e.message); }
   }
   const t = message.toLowerCase();
   const planish = /where|sit|hunt|stand|plan|best|when|tomorrow|saturday|sunday|monday|tuesday|wednesday|thursday|friday|morning|evening|front/.test(t);
@@ -597,10 +600,18 @@ Say "clear the map" to remove them.`.replace(/\\n/g, '\n'), actions: [], mapChan
   return { reply: planToText(p, plan) + (placed ? '\n\nRed Target Pin dropped on the board.' : ''), actions: placed ? [] : [{ type: 'pin', label: 'PIN THIS SIT ON THE MAP', pin }], alt: plan.alternatives.map((a) => ({ type: 'pin', label: a.standName, pin: pinFromPlan(a) })) };
 }
 
+const ADVISOR_SYSTEM = (prop) => `You are the CabinScout tactical advisor for a beginner whitetail hunter. Active property: "${prop.name}" (id ${prop.id}). Always ground answers in tool data (trail-cam sightings, live weather, thermals, scent cones). Give concrete attack plans: stand, time window, wind/barometer, why, and a stealth entry route. When you recommend a specific stand, call place_tactical_target_pin (or recommend_hunt_plan with drop_pin) so a Red Target Pin appears on the map. You can also draw on the map: show_deer_movement animates deer herds along predicted routes, add_map_marker and move_map_marker place or move stands/cameras, show_on_map draws labels, walk-in routes or zones. Prefer showing it on the map over only describing it. Keep it concise and plain-spoken.`;
+async function geminiChat(prop, message, history, impl) {
+  let pinsPlaced = 0, mapChanged = false;
+  const reply = await Gemini.chat({ system: ADVISOR_SYSTEM(prop), history, message, tools: TOOLS, runTool: async (name, input) => {
+    try { const out = await impl[name]({ property_id: prop.id, ...input }); if (/pin|plan/.test(name) && out.pin_id) pinsPlaced++; if (/show_deer|add_map|move_map|show_on|clear_ai|plan_scouting/.test(name)) mapChanged = true; return out; } catch (e) { return { error: e.message }; }
+  } });
+  return { reply, actions: [], pinsPlaced, mapChanged };
+}
 async function claudeChat(store, prop, message, history, impl) {
   const model = process.env.CLAUDE_MODEL || 'claude-sonnet-5-5';
   const tools = TOOLS.map((t) => ({ name: t.name, description: t.description, input_schema: t.inputSchema }));
-  const system = `You are the CabinScout tactical advisor for a beginner whitetail hunter. Active property: "${prop.name}" (id ${prop.id}). Always ground answers in tool data (trail-cam sightings, live weather, thermals, scent cones). Give concrete attack plans: stand, time window, wind/barometer, why, and a stealth entry route. When you recommend a specific stand, call place_tactical_target_pin (or recommend_hunt_plan with drop_pin) so a Red Target Pin appears on the map. You can also draw on the map: show_deer_movement animates deer herds along predicted routes, add_map_marker and move_map_marker place or move stands/cameras, show_on_map draws labels, walk-in routes or zones. Prefer showing it on the map over only describing it. Keep it concise and plain-spoken.`;
+  const system = ADVISOR_SYSTEM(prop);
   const messages = [...history.slice(-8).map((m) => ({ role: m.role, content: m.text })), { role: 'user', content: message }];
   let pinsPlaced = 0, mapChanged = false;
   for (let i = 0; i < 6; i++) {

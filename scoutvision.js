@@ -5,6 +5,8 @@ const os = require('os');
 const { execFile } = require('child_process');
 const path = require('path');
 const Scout = require('./scout.js');
+const Gemini = require('./gemini.js');
+const hasAI = () => !!process.env.ANTHROPIC_API_KEY || Gemini.enabled();
 const UP_DIR = path.join(__dirname, 'data', 'uploads');
 const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
 let pausedUntil = 0, busy = false, ffBin = null;
@@ -52,19 +54,23 @@ async function analyze(e) {
     if (buf.length > 4.5e6) return { skip: true };
     imgs = [{ mime: MIME[ext], buf }];
   }
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' }, signal: AbortSignal.timeout(60000),
-    body: JSON.stringify({ model: process.env.CLAUDE_MODEL || 'claude-sonnet-5-5', max_tokens: 500, messages: [{ role: 'user', content: [...imgs.map((x) => ({ type: 'image', source: { type: 'base64', media_type: x.mime, data: x.buf.toString('base64') } })), { type: 'text', text: (e.kind === 'video' ? 'These are 3 frames from one short video, in order. ' : '') + PROMPT + (e.caption ? `\nHunter's caption: ${e.caption}` : '') }] }] }),
-  });
-  const j = await r.json();
-  if (!r.ok) { const err = new Error((j.error && j.error.message) || 'API ' + r.status); err.status = r.status; throw err; }
-  const m = /\{[\s\S]*\}/.exec(j.content.filter((b) => b.type === 'text').map((b) => b.text).join(''));
+  let text;
+  if (process.env.ANTHROPIC_API_KEY) {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' }, signal: AbortSignal.timeout(60000),
+      body: JSON.stringify({ model: process.env.CLAUDE_MODEL || 'claude-sonnet-5-5', max_tokens: 500, messages: [{ role: 'user', content: [...imgs.map((x) => ({ type: 'image', source: { type: 'base64', media_type: x.mime, data: x.buf.toString('base64') } })), { type: 'text', text: PROMPT }] }] }),
+    });
+    const j = await r.json();
+    if (!r.ok) { const err = new Error((j.error && j.error.message) || 'API ' + r.status); err.status = r.status; throw err; }
+    text = j.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+  } else text = await Gemini.vision(PROMPT, imgs);
+  const m = /\{[\s\S]*\}/.exec(text);
   if (!m) throw new Error('No JSON in reply');
   return { vision: { ...JSON.parse(m[0]), ts: Date.now() } };
 }
 
 async function sweep() {
-  if (busy || !process.env.ANTHROPIC_API_KEY || Date.now() < pausedUntil) return;
+  if (busy || !hasAI() || Date.now() < pausedUntil) return;
   busy = true;
   try {
     for (const e of Scout.list().filter((x) => (x.kind === 'photo' || x.kind === 'video') && x.file && !x.vision && !x.visionSkip).slice(0, 5)) {
@@ -79,5 +85,5 @@ async function sweep() {
     }
   } finally { busy = false; }
 }
-const start = () => { if (process.env.ANTHROPIC_API_KEY) { setInterval(sweep, 20000); setTimeout(sweep, 3000); } };
+const start = () => { if (hasAI()) { setInterval(sweep, 20000); setTimeout(sweep, 3000); } };
 module.exports = { start, sweep };
