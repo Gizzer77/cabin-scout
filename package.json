@@ -1,0 +1,10 @@
+{
+  "name": "cabin-scout",
+  "version": "1.0.0",
+  "description": "Self-hosted whitetail scouting board: map, trail cams, wind and thermal predictions, hunt log. Zero dependencies.",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "setup": "node server.js", "mobile": "node mobile.js" },
+  "engines": { "node": ">=20" },
+  "keywords": ["hunting", "whitetail", "scouting", "trail-cam", "map"],
+  "license": "MIT"
+}

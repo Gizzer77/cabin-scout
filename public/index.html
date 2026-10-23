@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CabinScout</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23090D10' stroke='%23E0A83C' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23E0A83C'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="show-map">
+<header id="top">
+  <div class="brand"><span class="led"></span><span>CABIN <b>SCOUT</b></span></div>
+  <button id="homeBtn" class="btn" title="Back to all properties">&#8592; HOME</button>
+  <div class="hud" id="hud"></div>
+  <button id="mcpBadge" class="mcp off" title="MCP AI uplink"><span class="dot"></span><span id="mcpTxt">MCP UPLINK</span></button>
+</header>
+
+<input type="file" id="fieldFile" accept="application/json,.json" class="hidden">
+<main>
+  <div id="left">
+  <aside id="board" class="panel">
+    <div class="ph"><h2><span class="burger">&#9776;</span> INTEL BULLETIN BOARD</h2><span class="hbtns"><button id="scoutBtn" class="btn green" title="Show me where to walk and what to look for">&#129406; SCOUT WALK</button><button id="addSight" class="btn red">+ SIGHTING</button></span></div>
+    <div id="pinList"></div>
+    <div id="chips" class="chips"></div>
+    <div id="cards" class="cards"></div>
+    <div class="fsec" data-sec="walks"><div class="ph sub"><h3><span class="burger">&#9776;</span> MY SCOUTING WALKS</h3></div>
+    <div class="sbody"><div id="walkList"></div></div></div>
+    <div class="fsec" data-sec="hunt"><div class="ph sub"><h3><span class="burger">&#9776;</span> I'M HUNTING</h3></div>
+    <div class="sbody"><div id="targets" class="chips"></div></div></div>
+    <div class="fsec" data-sec="media"><div class="ph sub"><h3><span class="burger">&#9776;</span> SCOUT LOG MEDIA <span id="mediaN" class="sm"></span></h3></div>
+    <div class="sbody"><div id="mediaAI"></div><div id="mediaList"></div></div></div>
+    <div class="fsec" data-sec="wild"><div class="ph sub"><h3><span class="burger">&#9776;</span> WILDLIFE &amp; PREDATORS <span id="wildDot" class="rdot hidden" title="Something was logged in the last 2 days"></span></h3><button id="addWild" class="btn">+ LOG</button></div>
+    <div class="sbody"><div id="wildIntel"></div><div id="wildList"></div></div></div>
+    <div class="fsec" data-sec="notes"><div class="ph sub"><h3><span class="burger">&#9776;</span> PROPERTY NOTES</h3><button id="expBtn" class="btn" title="Download everything saved for this property as JSON">EXPORT DATA</button></div>
+    <div class="sbody"><div id="notes"></div>
+    <form id="noteForm" class="noteform"><input id="noteIn" placeholder="Add a field note..." autocomplete="off"><button class="btn">PIN</button></form></div></div>
+  </aside>
+  <aside id="chat" class="panel">
+    <div class="ph"><h2><span class="burger">&#9776;</span> AI TACTICAL BRIEFING</h2><span id="advisor" class="tag">LOCAL ADVISOR</span></div>
+    <div id="msgs" class="msgs"></div>
+    <div id="quick" class="quick"></div>
+    <form id="chatForm" class="chatform">
+      <button type="button" id="micBtn" class="ibtn" title="Voice prompt">&#127908;</button>
+      <input id="chatIn" placeholder="Where should I sit Saturday morning for a cold front?" autocomplete="off">
+      <button class="btn red">SEND</button>
+    </form>
+  </aside>
+  </div>
+
+  <section id="stage">
+    <div id="map"></div>
+    <canvas id="plume"></canvas>
+    <div id="tools" class="toolbar"></div>
+    <div id="layers" class="layerbox"></div>
+    <div id="pmcard" class="pincard hidden"></div>
+    <div id="drawbar" class="drawbar hidden"></div>
+    <div id="pincard" class="pincard hidden"></div>
+    <div id="selbar" class="selbar hidden"></div>
+    <div id="jcard" class="jcard hidden"></div>
+    <div id="walkbar" class="drawbar hidden"></div>
+    <div id="pickcard" class="pincard hidden"></div>
+    <div id="aibar" class="aibar hidden"></div>
+    <div id="timebar" class="timebar">
+      <button id="playBtn" class="ibtn" title="Play the day">&#9654;</button>
+      <button id="nowBtn" class="btn">NOW</button>
+      <button id="tTime" class="tlabel mono" title="Show / hide the time slider"></button>
+      <div class="slidewrap">
+        <input id="scrub" type="range" min="0" max="96" step="0.25" value="0">
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <span id="tMode" class="mono sm"></span>
+    </div>
+    <div id="status" class="statusline mono"></div>
+  </section>
+
+</main>
+
+<nav id="mnav">
+  <button data-v="show-board">INTEL</button><button data-v="show-map" class="on">MAP</button><button data-v="show-chat">AI</button>
+</nav>
+<div id="home" class="home hidden"></div>
+<div id="modalRoot"></div>
+<div id="toasts"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="physics.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

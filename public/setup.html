@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CabinScout Setup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#19130e;--wood:#2b2017;--wood2:#35281d;--line:#5b4431;--ink:#F4E9D6;--mute:#B89F83;--amber:#E0A83C;--orange:#D9722B;--green:#6B9A4F;--red:#C0392B;
+--slab:'Alfa Slab One','Rockwell',Georgia,serif;--sans:'Inter',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--ink);font:15px/1.5 var(--sans);
+background:radial-gradient(1200px 600px at 50% -10%,#3b2a1b,transparent),repeating-linear-gradient(90deg,#1b140e 0 46px,#1f1710 46px 48px),var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding:28px 16px 60px}
+h1{font-family:var(--slab);font-weight:400;font-size:34px;margin:0;letter-spacing:.03em}
+h1 b{color:var(--amber);font-weight:400}
+.sub{color:var(--mute);margin:4px 0 22px}
+.dots{display:flex;gap:6px;margin-bottom:16px}.dots i{flex:1;height:5px;border-radius:3px;background:#3a2c20}.dots i.on{background:var(--amber)}
+.card{background:linear-gradient(180deg,var(--wood2),var(--wood));border:1px solid var(--line);border-radius:10px;padding:22px;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 #6a5039}
+h2{font-family:var(--slab);font-weight:400;margin:0 0 6px;font-size:22px}
+label{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:14px 0 5px}
+input,select{width:100%;background:#1f1710;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:10px 11px;font:inherit;outline:none}
+input:focus,select:focus{border-color:var(--amber)}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.btn{background:#43321f;color:var(--ink);border:1px solid #7a5c3c;border-radius:7px;padding:10px 16px;font:600 13px var(--sans);letter-spacing:.06em;cursor:pointer}
+.btn:hover{border-color:var(--amber)}.btn.go{background:var(--orange);border-color:#f0904f;color:#1a0f07}
+.btn.go:hover{background:#ec8236}
+.nav{display:flex;justify-content:space-between;margin-top:22px;gap:10px}
+#map{height:280px;border-radius:8px;border:1px solid var(--line);margin-top:12px}
+.hint{font-size:13px;color:var(--mute);margin-top:6px}
+.opt{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:12px;background:#241b13}
+.opt b{display:block}.opt small{color:var(--mute)}
+.opt a{color:var(--amber)}
+.hide{display:none}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px}.chk input{width:auto;margin-top:4px}
+.err{color:#fca5a5;margin-top:10px;min-height:1em}
+ul.ok{padding-left:18px;color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CABIN<b>SCOUT</b></h1>
+  <div class="sub">Quick setup. Everything stays on your computer.</div>
+  <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
+
+  <div class="card" data-step="0">
+    <h2>Welcome</h2>
+    <p>CabinScout is a free, self-hosted whitetail scouting board. It maps your land, tracks sightings and trail cams, predicts wind and thermals around your stands, and keeps a scouting log.</p>
+    <ul class="ok"><li>No account and no cloud. Your data lives in the <code>data/</code> folder.</li><li>It works with zero API keys. Keys only unlock extras, and you can add them later.</li><li>This takes about two minutes.</li></ul>
+    <div class="nav"><span></span><button class="btn go" data-next>Let's go</button></div>
+  </div>
+
+  <div class="card hide" data-step="1">
+    <h2>Your land</h2>
+    <div class="hint">Search an address or town, tap the map to drop the center of your hunting property, or use your current location.</div>
+    <label>Property name</label><input id="pname" placeholder="Back forty, Grandpa's woods, ...">
+    <label>Find a place</label>
+    <div class="row"><input id="q" placeholder="Address, town, or lat, lng"><button class="btn" id="qgo" style="flex:none">Search</button><button class="btn" id="gps" style="flex:none">Use my location</button></div>
+    <div id="map"></div>
+    <div class="hint" id="picked">Nothing picked yet. You can also skip this and use the demo property.</div>
+    <div class="nav"><button class="btn" data-back>Back</button><button class="btn go" data-next>Next</button></div>
+  </div>
+
+  <div class="card hide" data-step="2">
+    <h2>Your hunt</h2>
+    <div class="hint">Used for the season countdown and tag counter in the Scout Log. All optional.</div>
+    <label>Season name</label><input id="sname" value="Bow season">
+    <div class="row"><div><label>Season start</label><input id="sstart" type="date"></div><div><label>Season end</label><input id="send" type="date"></div></div>
+    <div class="row"><div><label>Tags you hold</label><input id="tags" type="number" min="0" value="1"></div><div><label>Warn me near houses (yd)</label><input id="house" type="number" min="0" value="150"></div></div>
+    <div class="hint">Know your local laws on setbacks and legal hours. These numbers are only reminders.</div>
+    <div class="nav"><button class="btn" data-back>Back</button><button class="btn go" data-next>Next</button></div>
+  </div>
+
+  <div class="card hide" data-step="3">
+    <h2>Optional extras</h2>
+    <div class="hint">Skip everything here and the app still works. Keys are saved only to the <code>.env</code> file on this computer.</div>
+    <div class="opt"><b>AI field advisor (Anthropic)</b><small>Smarter stand and wind advice, plus reading photos. Get a key at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a>. Usage is billed to your account.</small><input id="k_anthropic" type="password" placeholder="sk-ant-..." autocomplete="off"></div>
+    <div class="opt"><b>Telegram Scout Log bot</b><small>Send photos and locations from the field. Create a bot with <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, paste its token. Needs a restart after setup.</small><input id="k_telegram" type="password" placeholder="123456:ABC..." autocomplete="off"></div>
+    <div class="opt"><b>Google Maps key</b><small>Better place search and elevation. Optional.</small><input id="k_google" type="password" placeholder="AIza..." autocomplete="off"></div>
+    <div class="opt"><b>Regrid token</b><small>Parcel lines outside Massachusetts. Optional (<a href="https://regrid.com/api" target="_blank" rel="noopener">regrid.com</a>).</small><input id="k_regrid" type="password" placeholder="token" autocomplete="off"></div>
+    <label class="chk"><input type="checkbox" id="demo" checked><span>Also add the <b>Demo Property</b> so I can explore every feature with sample sightings and stands. You can delete it any time.</span></label>
+    <div class="err" id="err"></div>
+    <div class="nav"><button class="btn" data-back>Back</button><button class="btn go" id="finish">Finish setup</button></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+let step = 0, pick = null, map, marker;
+const steps = [...document.querySelectorAll('[data-step]')], dots = [...document.querySelectorAll('#dots i')];
+function show(n) {
+  step = n; steps.forEach((el, i) => el.classList.toggle('hide', i !== n)); dots.forEach((d, i) => d.classList.toggle('on', i <= n));
+  if (n === 1) { initMap(); setTimeout(() => map.invalidateSize(), 50); }
+}
+document.querySelectorAll('[data-next]').forEach((b) => (b.onclick = () => show(step + 1)));
+document.querySelectorAll('[data-back]').forEach((b) => (b.onclick = () => show(step - 1)));
+function initMap() {
+  if (map) return;
+  map = L.map('map').setView([39.5, -98.35], 4);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri' }).addTo(map);
+  map.on('click', (e) => setPick(e.latlng.lat, e.latlng.lng));
+}
+function setPick(lat, lng, zoom) {
+  pick = { lat, lng };
+  if (marker) marker.setLatLng([lat, lng]); else marker = L.marker([lat, lng]).addTo(map);
+  if (zoom) map.setView([lat, lng], zoom);
+  $('#picked').textContent = `Picked ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+$('#qgo').onclick = async () => {
+  const q = $('#q').value.trim(); if (!q) return;
+  const m = /^(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)$/.exec(q);
+  if (m) return setPick(+m[1], +m[3], 16);
+  try {
+    const r = await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q))).json();
+    if (r[0]) setPick(+r[0].lat, +r[0].lon, 16); else $('#picked').textContent = 'No match. Try a town name or lat, lng.';
+  } catch (e) { $('#picked').textContent = 'Search failed. Tap the map instead.'; }
+};
+$('#q').onkeydown = (e) => { if (e.key === 'Enter') $('#qgo').click(); };
+$('#gps').onclick = () => navigator.geolocation ? navigator.geolocation.getCurrentPosition((p) => setPick(p.coords.latitude, p.coords.longitude, 17), () => ($('#picked').textContent = 'Location blocked. Search or tap the map.')) : 0;
+async function post(url, body) {
+  const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'Request failed'); return j;
+}
+$('#finish').onclick = async () => {
+  const btn = $('#finish'); btn.disabled = true; $('#err').textContent = '';
+  try {
+    const demo = $('#demo').checked;
+    if (!pick && !demo) throw new Error('Pick your land on step 2, or keep the demo property checked.');
+    if (pick) await post('/api/properties', { name: $('#pname').value.trim() || 'My Property', lat: pick.lat, lng: pick.lng });
+    const keys = {}; ['anthropic', 'telegram', 'google', 'regrid'].forEach((k) => (keys[k] = $('#k_' + k).value));
+    const r = await post('/api/setup', { demo, keys, scout: { seasonName: $('#sname').value, seasonStart: $('#sstart').value, seasonEnd: $('#send').value, tagsTotal: $('#tags').value, houseYd: $('#house').value } });
+    if (r.restart) alert('Telegram token saved. Stop the server (Ctrl+C) and run npm start again to turn the bot on.');
+    location.href = '/';
+  } catch (e) { $('#err').textContent = e.message; btn.disabled = false; }
+};
+show(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090D10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CabinScout Field</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="hdr">
+  <div id="gps" class="chip" role="button" tabindex="0"><span class="dot"></span><span id="gpsTxt">GPS: waiting…</span></div>
+  <div id="cmp" class="chip" role="button" tabindex="0"><span id="cmpArrow">&#10148;</span><span id="cmpTxt">Compass: tap to enable</span></div>
+</header>
+<main id="view"></main>
+<nav id="tabs">
+  <button data-t="home">MAP</button><button data-t="cam">CAMERA</button><button data-t="stand">STAND</button><button data-t="seen">SEEN</button><button data-t="hunt">HUNT</button><button data-t="log">LOG</button>
+</nav>
+<div id="toasts"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

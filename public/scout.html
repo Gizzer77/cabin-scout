@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<title>Scout Log</title>
+<style>
+  :root { --wood:#2a1b10; --plank:#47311f; --plank2:#3b2818; --edge:#1c1109; --cream:#f4e8d0; --dim:#d2bc96; --pine:#2f5d34; --ember:#b45309; --leather:#6b4a2b; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; color:var(--cream); font:16px/1.45 Georgia,'Times New Roman',serif; padding:0 16px 40px; max-width:900px; margin-inline:auto;
+    background-color:var(--wood);
+    background-image: repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 2px, transparent 2px 150px), repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 9px), linear-gradient(180deg, #33200f, #22150a); }
+  h1, h2, .slab { font:400 26px/1.1 'Alfa Slab One',Georgia,serif; letter-spacing:.02em; color:var(--cream); text-shadow:0 2px 0 #000a; margin:0; }
+  h2 { font-size:22px; margin:18px 0 4px; }
+  a { color:#e9c27a; }
+  .dim { color:var(--dim); font-size:14px; }
+
+  /* top bar: title + property, always visible */
+  .top { position:sticky; top:0; z-index:5; margin:0 -16px; padding:12px 16px 10px; background:linear-gradient(180deg,#1c1109,#2a1b10); border-bottom:3px solid #0008; box-shadow:0 4px 0 #0005; }
+  .top .brand { display:flex; align-items:center; gap:10px; }
+  .top h1 { font-size:24px; flex:1; } .top h1::before { content:'\1F332  '; }
+  .propbar { display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .propbar label { font-size:13px; color:var(--dim); white-space:nowrap; }
+  .propbar select { margin:0; }
+  #back { padding:6px 12px; }
+
+  .box { background:linear-gradient(180deg,var(--plank),var(--plank2)); border:2px solid var(--edge); border-radius:6px; padding:16px; margin:16px 0; box-shadow:0 3px 0 #0007, inset 0 0 0 3px #ffffff0d, inset 0 0 0 4px #0003; }
+  input[type=text], input[type=number], select { width:100%; background:#1c1109; color:var(--cream); border:1px solid #7a5b38; border-radius:5px; padding:10px; margin-top:8px; font:inherit; }
+  input::placeholder { color:#ad967a; }
+  button { background:var(--pine); color:#fff; border:2px solid #1c3a20; border-radius:5px; padding:10px 15px; font:700 15px Georgia,serif; cursor:pointer; box-shadow:0 2px 0 #0008; }
+  button:active { transform:translateY(2px); box-shadow:none; }
+  button.alt { background:var(--leather); border-color:#3e2a16; }
+  button.big { width:100%; padding:14px; font-size:17px; margin-top:12px; }
+  button.stop { background:#8a2a1a; border-color:#4a140a; }
+  .chip { background:var(--leather); text-transform:capitalize; } .chip.on { background:var(--ember); border-color:#6a2f04; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .row select { width:auto; margin:0; }
+
+  /* home tiles */
+  .banner { display:block; width:100%; text-align:left; background:#8a2a1a; border-color:#4a140a; margin-top:14px; }
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+  .tile { display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:16px 14px; min-height:118px; text-align:left; background:linear-gradient(180deg,var(--plank),var(--plank2)); border:2px solid var(--edge); box-shadow:0 4px 0 #0008, inset 0 0 0 3px #ffffff0d; border-radius:6px; }
+  .tile .ic { font-size:34px; line-height:1; } .tile .nm { font:400 18px/1.15 'Alfa Slab One',Georgia,serif; margin-top:6px; } .tile .sub { font:400 13px Georgia,serif; color:var(--dim); }
+  .tile.wide { grid-column:1 / -1; min-height:0; flex-direction:row; align-items:center; gap:14px; }
+  .tile.wide .nm { margin:0; }
+
+  .drop { border:3px dashed #a98557; border-radius:6px; padding:28px 16px; text-align:center; cursor:pointer; background:#0000002e; }
+  .drop.over { border-color:#e9c27a; background:#00000050; }
+  #prog { color:#a8e0a0; font-size:14px; margin-top:10px; white-space:pre-line; }
+  .check { display:flex; gap:8px; align-items:center; margin-top:12px; color:var(--dim); font-size:14px; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin-top:12px; }
+  .item { background:var(--cream); color:#2a1b10; border:2px solid var(--edge); border-radius:4px; overflow:hidden; box-shadow:0 4px 0 #0008; }
+  .item img, .item video { width:100%; height:170px; object-fit:cover; display:block; background:#000; border-bottom:3px solid #8a6a3f; }
+  .item .meta { padding:10px; font-size:14px; } .item .meta p { margin:0 0 6px; }
+  .item a { color:#7a3b06; } .item input[type=text] { background:#fff8e6; color:#2a1b10; border-color:#b89a6a; margin:0; flex:1; min-width:0; }
+  .tag { font-size:11px; color:#6b4a2b; text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+  .pin { height:120px; display:grid; place-items:center; font-size:36px; background:#e6d3ab; border-bottom:3px solid #8a6a3f; }
+  .bar { height:16px; background:#1c1109; border:1px solid #7a5b38; border-radius:8px; overflow:hidden; margin-top:12px; }
+  .bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#3d7a44,#a8e0a0); transition:width .15s; }
+  .minimap { position:relative; height:170px; overflow:hidden; background:#1c1109; border-bottom:3px solid #8a6a3f; }
+  .minimap .mm { position:absolute; left:50%; top:50%; width:768px; height:768px; }
+  .minimap .mm img { position:absolute; width:256px; height:256px; max-width:none; height:256px; border:0; }
+  .minimap .dot { position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; border-radius:50%; background:#ef4444; border:3px solid #fff; box-shadow:0 0 0 2px #0009; }
+  #pickmap { height:55vh; min-height:320px; border:2px solid var(--edge); border-radius:6px; margin-top:10px; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .stat { background:#1c1109; border:1px solid #7a5b38; border-radius:5px; padding:8px 10px; }
+  .stat b { display:block; font:400 18px/1.2 'Alfa Slab One',Georgia,serif; } .stat span { font-size:12px; color:var(--dim); }
+  #planmap, #wrapmap { height:50vh; min-height:300px; border:2px solid var(--edge); border-radius:6px; margin:12px 0; }
+  .tl { position:relative; margin-top:10px; padding-left:16px; }
+  .tl::before { content:''; position:absolute; left:2px; top:4px; bottom:4px; width:3px; border-radius:2px; background:#7a5b38; }
+  .tl div { margin:0 0 10px; font-size:14px; } .tl b { color:#e9c27a; }
+  .brow { display:flex; align-items:center; gap:8px; margin-top:6px; font-size:13px; }
+  .bl { width:92px; flex:none; color:var(--dim); } .bn { width:30px; text-align:right; }
+  .bt { flex:1; height:14px; background:#1c1109; border-radius:7px; overflow:hidden; }
+  .bt i { display:block; height:100%; background:linear-gradient(90deg,#b45309,#e9c27a); }
+  .box.warn { background:#8a2a1a; border-color:#4a140a; }
+  #signmapEl, #recmap { height:60vh; min-height:320px; border:2px solid var(--edge); border-radius:6px; margin:12px 0; }
+  #qbar { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:8px; padding:8px 10px; background:#8a5a12; color:#fff; border-radius:5px; font-size:14px; }
+  .field { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; } .field label { font-size:12px; color:var(--dim); }
+  .thumbs { display:flex; gap:6px; margin-top:6px; overflow-x:auto; } .thumbs img { height:70px; border-radius:3px; border:2px solid #0006; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand"><button class="alt" id="back" hidden>&larr; Home</button><h1>Scout Log</h1></div>
+  <div class="propbar"><label for="prop">Property</label><select id="prop"><option value="">Auto (from my location)</option></select></div>
+  <div id="qbar" hidden><span id="qtxt"></span><button class="alt" id="qsend">Send now</button></div>
+</div>
+
+<!-- HOME -->
+<section id="v-home">
+  <button class="banner" id="huntBanner" data-go="hunt" hidden></button>
+  <h2>What do you want to do?</h2>
+  <div class="tiles">
+    <button class="tile" data-go="hunt"><span class="ic">&#129420;</span><span class="nm">Go Hunting</span><span class="sub">Start a sit, log what you see</span></button>
+    <button class="tile" data-go="scout"><span class="ic">&#129406;</span><span class="nm">Scouting Report</span><span class="sub">Rubs, scrapes, trails, bedding</span></button>
+    <button class="tile" data-go="maps"><span class="ic">&#128205;</span><span class="nm">Where I Was</span><span class="sub">Your spots: screenshots or pick on the map</span></button>
+    <button class="tile" data-go="upload"><span class="ic">&#128247;</span><span class="nm">Photos &amp; Videos</span><span class="sub">On the go: tagged where you are now</span></button>
+    <button class="tile" data-go="see"><span class="ic">&#128065;</span><span class="nm">I See Something</span><span class="sub">Deer, turkey, coyote...</span></button>
+    <button class="tile" data-go="plans"><span class="ic">&#128506;</span><span class="nm">Scouting Plans</span><span class="sub">Walks you planned, with stops</span></button>
+    <button class="tile" data-go="learn"><span class="ic">&#128202;</span><span class="nm">What I've Learned</span><span class="sub">Best times, winds, stands, bucks</span></button>
+    <button class="tile" data-go="signmap"><span class="ic">&#129517;</span><span class="nm">Sign Map</span><span class="sub">Everything on one map</span></button>
+    <button class="tile wide" data-go="log"><span class="ic">&#128214;</span><span><span class="nm">My Log</span><br><span class="sub" id="logSub">Everything you have logged</span></span></button>
+  </div>
+</section>
+
+<!-- HUNT -->
+<section id="v-hunt" hidden>
+  <h2>Go Hunting</h2>
+  <div class="box" id="seasonBox">
+    <div id="seasonTxt"></div>
+    <div class="dim" id="lightTxt" style="margin-top:4px"></div>
+    <div class="row"><button class="alt" id="seasonEdit">Edit season, tags &amp; warning distances</button></div>
+    <div id="seasonForm" hidden>
+      <div class="field">
+        <div><label for="f_seasonName">Season name</label><input type="text" id="f_seasonName" style="margin:2px 0 0"></div>
+        <div><label for="f_tagsTotal">Tags I have</label><input type="number" id="f_tagsTotal" min="0" inputmode="numeric" style="margin:2px 0 0"></div>
+        <div><label for="f_seasonStart">Opens</label><input type="date" id="f_seasonStart" style="margin:2px 0 0;width:100%;background:#1c1109;color:var(--cream);border:1px solid #7a5b38;border-radius:5px;padding:9px"></div>
+        <div><label for="f_seasonEnd">Closes</label><input type="date" id="f_seasonEnd" style="margin:2px 0 0;width:100%;background:#1c1109;color:var(--cream);border:1px solid #7a5b38;border-radius:5px;padding:9px"></div>
+        <div><label for="f_tagsUsed">Tags used</label><input type="number" id="f_tagsUsed" min="0" inputmode="numeric" style="margin:2px 0 0"></div>
+        <div><label for="f_edgeYd">Warn me within (yd) of the line</label><input type="number" id="f_edgeYd" min="0" inputmode="numeric" style="margin:2px 0 0"></div>
+        <div><label for="f_houseYd">Warn me within (yd) of a house</label><input type="number" id="f_houseYd" min="0" inputmode="numeric" style="margin:2px 0 0"></div>
+      </div>
+      <button class="big" id="seasonSave">Save</button>
+    </div>
+  </div>
+  <div class="box" id="safety" hidden></div>
+  <div class="box" id="huntOff">
+    <span class="dim">Start when you leave the truck or trailhead. I time your walk in, track where you walk, and time your sit on stand.</span>
+    <input type="text" id="stand" list="standList" placeholder="Which stand? (optional, I detect it when you arrive)"><datalist id="standList"></datalist>
+    <button class="big" id="huntStart">Start hunt: heading in</button>
+    <div class="dim" id="huntMsg"></div>
+  </div>
+  <div class="box" id="huntOn" hidden>
+    <div class="slab" id="huntTitle" style="font-size:20px"></div>
+    <div class="dim" id="huntPhase"></div>
+    <div class="stats" id="huntStats"></div>
+    <button class="big" id="huntArrive">&#127794; I'm at my stand</button>
+    <button class="big alt" data-go="see">&#128065; Log a sighting</button>
+    <button class="big alt" id="huntShot">&#127993; I took a shot</button>
+    <button class="big alt" data-go="upload">&#128247; Photos &amp; videos</button>
+    <input type="text" id="hres" placeholder="How did it go? (optional)">
+    <button class="big stop" id="huntEnd">End hunt &amp; see report</button>
+    <div class="dim" style="margin-top:8px">Keep this screen open while you walk so the GPS track keeps recording.</div>
+  </div>
+  <h2 style="margin-top:22px;font-size:18px">Past hunts</h2>
+  <div id="pastHunts"></div>
+</section>
+
+<!-- SCOUT -->
+<section id="v-scout" hidden>
+  <h2>Scouting Report</h2>
+  <div class="box">
+    <span class="dim">Found sign? Tap what it is, then log it where you are standing.</span>
+    <div class="row" id="signs"></div>
+    <input type="text" id="signNote" placeholder="Details (fresh, size, direction it was heading...)">
+    <button class="big" id="signBtn">Log sign here</button>
+    <div class="dim" id="signMsg"></div>
+  </div>
+  <button class="tile wide" data-go="upload" style="width:100%"><span class="ic">&#128247;</span><span><span class="nm">Add photos and videos</span><br><span class="sub">Footage of the brush, trails, terrain</span></span></button>
+</section>
+
+<!-- SEE -->
+<section id="v-see" hidden>
+  <h2>I See Something</h2>
+  <div class="box">
+    <span class="dim">What happened?</span>
+    <div class="row" id="meth"></div>
+    <span class="dim" style="display:block;margin-top:12px">What was it?</span>
+    <div class="row" id="sp"></div>
+    <input type="number" id="scount" min="1" max="99" value="1" inputmode="numeric" aria-label="How many">
+    <div id="dirBox" hidden>
+      <span class="dim" style="display:block;margin-top:12px">Which direction did it come from?</span>
+      <div class="row" id="dirs"></div>
+      <div class="row" id="dists"></div>
+    </div>
+    <div id="goBox">
+      <span class="dim" style="display:block;margin-top:12px">Which way did it go? (optional)</span>
+      <div class="row" id="goes"></div>
+    </div>
+    <span class="dim" style="display:block;margin-top:12px">Where?</span>
+    <div class="row"><button class="chip on" id="wGps">Where I am</button><button class="chip" id="wMap">Pick on the map</button></div>
+    <div class="dim" id="wInfo" style="margin-top:6px"></div>
+    <input type="text" id="snote" placeholder="Details (optional)">
+    <button class="big" id="sbtn">Log it</button>
+    <div class="dim" id="smsg"></div>
+  </div>
+</section>
+
+<!-- WHERE I WAS -->
+<section id="v-maps" hidden>
+  <h2>Where I Was</h2>
+  <div class="box">
+    <span class="dim">Step 1. Mark the spots you scouted. Either choose the spot on the map, or upload a map screenshot from your phone. For a screenshot I read the coordinates off it, then the picture is thrown away and only the spot is kept.</span>
+    <button class="big" id="pickBtn">&#128205; Choose a spot on the map</button>
+    <div class="drop" id="mdrop" style="margin-top:14px">Or tap to upload map screenshots<input type="file" id="mfile" accept="image/*" multiple hidden></div>
+    <div class="bar" id="mbar" hidden><i id="mfill"></i></div>
+    <div id="mprog"></div>
+    <div class="row"><button id="mretry" hidden>Retry failed</button></div>
+  </div>
+  <div class="dim" id="mstat"></div>
+  <div class="grid" id="mlist"></div>
+</section>
+
+<!-- PHOTOS AND VIDEOS (on the go) -->
+<section id="v-upload" hidden>
+  <h2>Photos &amp; Videos</h2>
+  <div class="box">
+    <span class="dim">On the go. Take or pick photos and videos and they are tagged with where you are right now, on the property picked at the top. If a hunt is running, they are tied to it.</span>
+    <label class="check"><input type="checkbox" id="tagGps" checked> Tag with my current location</label>
+    <div class="drop" id="drop" style="margin-top:12px">Tap to take or pick photos and videos<input type="file" id="file" accept="image/*,video/*" multiple hidden></div>
+    <input type="text" id="cap" placeholder="Note (optional): what you saw...">
+    <div class="bar" id="bar" hidden><i id="fill"></i></div>
+    <div id="prog"></div>
+    <div class="row"><button id="retry" hidden>Retry failed</button></div>
+  </div>
+</section>
+
+<!-- ONE SPOT -->
+<section id="v-spot" hidden>
+  <h2 id="spotTitle">Spot here</h2>
+  <div class="box" style="padding:0;overflow:hidden"><div id="spotMap"></div></div>
+  <div class="dim" id="spotInfo"></div>
+  <div class="row"><input type="text" id="sname" placeholder="Name this spot (optional)" style="margin:0;flex:1"><button class="alt" id="sren">Save name</button></div>
+  <div class="box">
+    <span class="slab" style="font-size:18px">Add media here</span>
+    <div class="drop" id="sdrop" style="margin-top:12px">Tap to pick the photos and videos from this spot<input type="file" id="sfile" accept="image/*,video/*" multiple hidden></div>
+    <input type="text" id="scap" placeholder="Note (optional)">
+    <div class="bar" id="sbar" hidden><i id="sfill"></i></div>
+    <div id="sprog"></div>
+    <div class="row"><button id="sretry" hidden>Retry failed</button></div>
+  </div>
+  <div class="dim" id="sstat"></div>
+  <div class="grid" id="sgrid"></div>
+</section>
+
+<!-- PICK A SPOT -->
+<section id="v-pick" hidden>
+  <h2 id="pickTitle">Choose Your Spot</h2>
+  <div class="dim">Tap the map. It opens on the property picked at the top.</div>
+  <div id="pickmap"></div>
+  <input type="text" id="pickName" placeholder="Name this spot (optional), like creek crossing">
+  <div class="dim" id="pickCoord" style="margin-top:8px">Tap the map to drop a dot.</div>
+  <button class="big" id="pickSave" disabled>Save this spot</button>
+</section>
+
+<!-- SCOUTING PLANS -->
+<section id="v-plans" hidden>
+  <h2>Scouting Plans</h2>
+  <div class="dim">Walks you planned in CabinScout. Pick one to follow it.</div>
+  <div id="planList"></div>
+</section>
+<section id="v-plan" hidden>
+  <h2 id="planTitle"></h2>
+  <div class="dim" id="planSub"></div>
+  <div id="planmap"></div>
+  <div class="row"><button class="alt" id="planLoc">Show me on the map</button><a class="dim" id="planNav" target="_blank">Directions to the start</a></div>
+  <div id="planStops"></div>
+</section>
+
+<!-- HUNT REPORT -->
+<section id="v-wrap" hidden>
+  <h2 id="wrapTitle">Hunt report</h2>
+  <div class="dim" id="wrapSub"></div>
+  <div class="stats" id="wrapStats"></div>
+  <div id="wrapShots"></div>
+  <div class="box"><span class="slab" style="font-size:18px">The wrap</span><p id="wrapText" style="margin-bottom:0"></p></div>
+  <div id="wrapmap"></div>
+  <div class="box"><span class="slab" style="font-size:18px">Timeline</span><div class="tl" id="wrapTl"></div></div>
+</section>
+
+<!-- WHAT I'VE LEARNED -->
+<section id="v-learn" hidden>
+  <h2>What I've Learned</h2>
+  <div class="row" id="lsp"></div>
+  <div class="dim" id="learnSub" style="margin-top:8px"></div>
+  <div class="box"><span class="slab" style="font-size:18px">Best times</span><div id="chHours"></div><div class="dim" id="txHours" style="margin-top:8px"></div></div>
+  <div class="box"><span class="slab" style="font-size:18px">Wind (blowing from)</span><div id="chWind"></div><div class="dim" id="txWind" style="margin-top:8px"></div></div>
+  <div class="box"><span class="slab" style="font-size:18px">Temperature</span><div id="chTemp"></div><div class="dim" id="txTemp" style="margin-top:8px"></div></div>
+  <div class="box"><span class="slab" style="font-size:18px">Pressure (inHg)</span><div id="chPres"></div></div>
+  <div class="box"><span class="slab" style="font-size:18px">Moon</span><div id="chMoon"></div></div>
+  <div class="box"><span class="slab" style="font-size:18px">By stand</span><div id="chStand" style="margin-top:8px"></div></div>
+  <div class="box"><span class="slab" style="font-size:18px">My bucks</span>
+    <div id="buckList" style="margin-top:8px"></div>
+    <div class="row"><input type="text" id="newBuck" placeholder="Name a buck, like Droptine" style="margin:0;flex:1"><button id="addBuck">Add buck</button></div>
+    <div class="dim" id="buckMsg"></div>
+  </div>
+</section>
+
+<!-- SIGN MAP -->
+<section id="v-signmap" hidden>
+  <h2>Sign Map</h2>
+  <div class="dim" id="smSub"></div>
+  <div class="row">
+    <label class="check" style="margin:0"><input type="checkbox" id="ly_animals" checked> Animals</label>
+    <label class="check" style="margin:0"><input type="checkbox" id="ly_sign" checked> Sign</label>
+    <label class="check" style="margin:0"><input type="checkbox" id="ly_heat"> Heat</label>
+    <label class="check" style="margin:0"><input type="checkbox" id="ly_walk"> My walk-ins</label>
+    <label class="check" style="margin:0"><input type="checkbox" id="ly_spots"> Spots</label>
+    <label class="check" style="margin:0"><input type="checkbox" id="ly_stands" checked> Stands &amp; houses</label>
+  </div>
+  <div id="signmapEl"></div>
+  <div class="dim" id="smWalk"></div>
+  <div class="dim" style="margin-top:8px">Dots: deer red, coyote purple, turkey blue. Sign: rub orange, scrape yellow, trail light blue, bedding violet, tracks green. Yellow rings are deer or sign within 60 yd of a walk-in route.</div>
+</section>
+
+<!-- I TOOK A SHOT -->
+<section id="v-shot" hidden>
+  <h2>I Took a Shot</h2>
+  <div class="box">
+    <span class="dim">Fill in what you can now. It saves where you shot from, and you can mark the blood trail after.</span>
+    <div class="row" id="shsp"></div>
+    <input type="number" id="shDist" placeholder="Distance in yards" inputmode="numeric" min="1">
+    <span class="dim" style="display:block;margin-top:12px">Which direction was the animal from you?</span>
+    <div class="row" id="shdir"></div>
+    <span class="dim" style="display:block;margin-top:12px">Result</span>
+    <div class="row" id="shres"></div>
+    <span class="dim" style="display:block;margin-top:12px">If it was a hit, where? (optional)</span>
+    <div class="row" id="shhit"></div>
+    <input type="text" id="shNote" placeholder="What happened (optional)">
+    <button class="big" id="shSave">Save shot</button>
+    <div class="dim" id="shMsg"></div>
+  </div>
+</section>
+
+<!-- SHOT REPORT / RECOVERY -->
+<section id="v-recover" hidden>
+  <h2 id="rcTitle">Shot</h2>
+  <div class="dim" id="rcSub"></div>
+  <div id="recmap"></div>
+  <div class="box">
+    <span class="slab" style="font-size:18px">Mark it where you are</span>
+    <div class="row" id="rcBtns">
+      <button data-pt="lastseen">Last saw it</button><button data-pt="arrow">Arrow</button><button data-pt="blood">Blood</button><button data-pt="found">Found it</button>
+    </div>
+    <div class="dim" id="rcMsg" style="margin-top:8px"></div>
+  </div>
+  <div class="box">
+    <span class="slab" style="font-size:18px">How did it end?</span>
+    <div class="row" id="rcRes"><button class="alt" data-res="recovered">Recovered</button><button class="alt" data-res="not recovered">Not recovered</button><button class="alt" data-res="tracking">Still tracking</button></div>
+    <div class="row" id="rcTagRow" hidden><button id="rcTag">Count it against a tag</button></div>
+  </div>
+  <div class="box">
+    <span class="slab" style="font-size:18px">Recovery checklist</span>
+    <p class="dim">Stay quiet and still. Mark exactly where it was standing and which way it ran.</p>
+    <p class="dim">Look at the arrow and the blood. The color and where they are tell you a lot about the hit.</p>
+    <p class="dim">Give it time before you track: about 30 minutes for a good lung or heart hit, several hours for a gut hit or if you are unsure. Back out quietly if in doubt.</p>
+    <p class="dim">Mark each blood spot with the button above, so you can follow the line and never lose the last one.</p>
+    <p class="dim">If you lose the trail, call for help. Many states have volunteer trackers with dogs. Check your state's recovery rules.</p>
+  </div>
+  <div class="box"><span class="slab" style="font-size:18px">Marks</span><div class="tl" id="rcPoints"></div></div>
+</section>
+
+<!-- LOG -->
+<section id="v-log" hidden>
+  <h2>My Log</h2>
+  <div class="dim" id="bot"></div>
+  <div class="row"><span class="dim">Show:</span><select id="filt"><option value="">All properties</option></select></div>
+  <div class="grid" id="list"></div>
+</section>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const tg = window.Telegram && Telegram.WebApp; if (tg) { tg.ready(); tg.expand(); }
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const AUTH = () => (tg && tg.initData ? { 'x-tg-init': tg.initData } : {});
+let K = '', PROPS = [], ENTRIES = [], pos = null, SP = 'deer', SIGN = 'rub', failed = [];
+const asset = (u) => (K ? `${u}?k=${K}` : u);
+const propName = (id) => (PROPS.find((p) => p.id === id) || {}).name || 'no property';
+const call = async (path, body, method = 'POST') => {
+  const r = await fetch(path, { method, headers: { 'content-type': 'application/json', ...AUTH() }, body: JSON.stringify(body || {}) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || r.status); return j;
+};
+
+/* ---------- offline queue: with no signal, taps and uploads wait on the phone and send themselves later ---------- */
+const QMEM = []; let QBUSY = false;
+const idb = () => new Promise((res, rej) => {
+  if (!window.indexedDB) return rej(new Error('no idb'));
+  const r = indexedDB.open('scoutq', 1); r.onupgradeneeded = () => r.result.createObjectStore('q', { keyPath: 'qid', autoIncrement: true });
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+});
+async function qtx(mode, fn) { const db = await idb(); return new Promise((res, rej) => { const t = db.transaction('q', mode), r = fn(t.objectStore('q')); t.oncomplete = () => res(r.result); t.onerror = () => rej(t.error); }); }
+const QADD = async (it) => { try { await qtx('readwrite', (st) => st.add(it)); } catch (e) { QMEM.push(it); } };
+const QALL = async () => { let a = []; try { a = await qtx('readonly', (st) => st.getAll()); } catch (e) {} return [...a, ...QMEM]; };
+const QDEL = async (it) => { if (it.qid != null) { try { await qtx('readwrite', (st) => st.delete(it.qid)); } catch (e) {} } else { const i = QMEM.indexOf(it); if (i >= 0) QMEM.splice(i, 1); } };
+const isNet = (e) => e instanceof TypeError || /failed to fetch|network|connection/i.test(String(e && e.message));
+async function updateQ() { const n = (await QALL()).length; $('qbar').hidden = !n; $('qtxt').textContent = `\u{1F4E1} ${n} item${n === 1 ? '' : 's'} saved on your phone, waiting for signal.`; }
+async function callQ(path, body, method = 'POST') {
+  body = { ...(body || {}), ts: (body && body.ts) || Date.now() };
+  try { return await call(path, body, method); }
+  catch (e) { if (!isNet(e)) throw e; await QADD({ kind: 'json', path, method, body, headers: AUTH() }); await updateQ(); return { queued: true }; }
+}
+async function flushQ() {
+  if (QBUSY) return; QBUSY = true;
+  try {
+    let sent = 0;
+    for (const it of await QALL()) {
+      try {
+        if (it.kind === 'file') { const r = await xhrPost('/api/scout', it.headers, it.blob, () => {}); if (!r.ok && r.status >= 500) break; }
+        else { const r = await fetch(it.path, { method: it.method, headers: { 'content-type': 'application/json', ...it.headers }, body: JSON.stringify(it.body) }); if (r.status >= 500) break; }
+        await QDEL(it); sent++;
+      } catch (e) { break; } // still no signal
+    }
+    if (sent) { if (!(await QALL()).length) OV = {}; await load(); }
+  } finally { QBUSY = false; updateQ(); }
+}
+$('qsend').onclick = flushQ;
+window.addEventListener('online', flushQ);
+
+/* ---------- views ---------- */
+const VIEWS = ['home', 'hunt', 'scout', 'see', 'maps', 'upload', 'pick', 'spot', 'plans', 'plan', 'wrap', 'learn', 'signmap', 'shot', 'recover', 'log'];
+let CUR = 'home', SPOT = null, WRAP = null, PLAN = null, PICK_MODE = 'spot', SEEPOS = null, WHERE = 'gps', SHOTID = null, OV = {};
+function show(v) {
+  if (!VIEWS.includes(v)) v = 'home';
+  CUR = v;
+  $('back').textContent = '\u2190 ' + ({ spot: 'Where I Was', pick: PICK_MODE === 'see' ? 'Back' : 'Where I Was', plan: 'Plans', wrap: 'Hunting', shot: 'Hunting', recover: 'Hunting' }[v] || 'Home');
+  VIEWS.forEach((x) => { $('v-' + x).hidden = x !== v; });
+  $('back').hidden = v === 'home';
+  if (location.hash.slice(1) !== (v === 'home' ? '' : v)) location.hash = v === 'home' ? '' : v;
+  if (tg && tg.BackButton) { v === 'home' ? tg.BackButton.hide() : tg.BackButton.show(); }
+  window.scrollTo(0, 0);
+  if (v === 'hunt') renderHunt();
+  if (v === 'log') renderLog();
+  if (v === 'maps') renderMaps();
+  if (v === 'pick') setTimeout(initPick, 0);
+  if (v === 'spot') renderSpot();
+  if (v === 'plans') renderPlans();
+  if (v === 'plan') renderPlan();
+  if (v === 'wrap') renderWrap();
+  if (v === 'learn') renderLearn();
+  if (v === 'signmap') renderSignMap();
+  if (v === 'recover') renderRecover();
+  if (v === 'hunt') loadSeason();
+  trackSync();
+  if (v === 'see') updateWhere();
+}
+document.addEventListener('click', (e) => { const g = e.target.closest('[data-go]'); if (g) show(g.dataset.go); });
+const goBack = () => show({ spot: 'maps', pick: PICK_MODE === 'see' ? 'see' : 'maps', plan: 'plans', wrap: 'hunt', shot: 'hunt', recover: 'hunt' }[CUR] || 'home');
+$('back').onclick = goBack;
+window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
+
+/* ---------- property ---------- */
+function fillProps() {
+  if ($('prop').options.length > 1 || !PROPS.length) return;
+  PROPS.forEach((p) => { $('prop').add(new Option(p.name, p.id)); $('filt').add(new Option(p.name, p.id)); });
+  let saved = ''; try { saved = localStorage.getItem('scoutProp') || ''; } catch (e) {}
+  $('prop').value = saved && PROPS.some((p) => p.id === saved) ? saved : '';
+}
+$('prop').onchange = () => { try { localStorage.setItem('scoutProp', $('prop').value); } catch (e) {} fillStands(); };
+function fillStands() {
+  const p = PROPS.find((x) => x.id === $('prop').value);
+  $('standList').innerHTML = ((p && p.stands) || []).map((n) => `<option value="${esc(n.name)}">`).join('');
+}
+$('filt').onchange = renderLog;
+
+/* ---------- location ---------- */
+const here = () => new Promise((res) => {
+  if (!navigator.geolocation) return res(pos || {});
+  navigator.geolocation.getCurrentPosition((p) => res({ lat: p.coords.latitude, lng: p.coords.longitude }), () => res(pos || {}), { enableHighAccuracy: true, timeout: 8000 });
+});
+
+/* ---------- helpers ---------- */
+const clock = (ts) => new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+const dayOf = (ts) => new Date(ts).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+const compass = (d) => ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'][Math.round((((d % 360) + 360) % 360) / 22.5) % 16];
+const ll = (p) => (Array.isArray(p) ? { lat: p[1], lng: p[2] } : p);
+function dM(a, b) { const R = 6371000, r = Math.PI / 180, x = Math.sin((b.lat - a.lat) * r / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin((b.lng - a.lng) * r / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); }
+function pathDist(pts) { let t = 0; for (let i = 1; i < pts.length; i++) { const d = dM(pts[i - 1], pts[i]); if (d > 2 && d < 500) t += d; } return t; }
+const fmtDist = (m) => (m < 400 ? `${Math.round(m * 1.0936)} yd` : `${(m / 1609.34).toFixed(2)} mi`);
+const dur = (ms) => { const m = Math.max(0, Math.round(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; };
+const MAPS = {};
+function freshMap(id) {
+  if (typeof L === 'undefined') return null;
+  if (MAPS[id]) MAPS[id].remove();
+  const m = L.map(id); L.tileLayer(TILES, { maxZoom: 19, attribution: 'Esri' }).addTo(m); MAPS[id] = m; return m;
+}
+
+/* ---------- chips ---------- */
+function chips(box, list, get, set, toggle) {
+  list.forEach((v) => {
+    const b = document.createElement('button'); b.className = 'chip' + (v === get() ? ' on' : ''); b.textContent = v;
+    b.onclick = () => {
+      const off = toggle && get() === v; set(off ? '' : v);
+      [...box.children].forEach((c) => c.classList.toggle('on', !off && c.textContent === v));
+      if (box.id === 'meth') updateSee();
+    };
+    box.appendChild(b);
+  });
+}
+let METH = 'saw', DIR = '', DIST = 'medium ~150 yd', GO = '';
+const METHMAP = { saw: 'seen', heard: 'heard', tracks: 'tracks', scat: 'scat', damage: 'damage' };
+const DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], DISTM = { 'close ~50 yd': 46, 'medium ~150 yd': 137, 'far ~300 yd': 274 };
+chips($('meth'), Object.keys(METHMAP), () => METH, (v) => { METH = v || 'saw'; });
+chips($('sp'), ['deer', 'turkey', 'coyote', 'bear', 'hog', 'fox', 'bobcat', 'human', 'other'], () => SP, (v) => { SP = v || 'other'; });
+chips($('dirs'), DIRS, () => DIR, (v) => { DIR = v; }, true);
+chips($('dists'), Object.keys(DISTM), () => DIST, (v) => { DIST = v; });
+chips($('goes'), DIRS, () => GO, (v) => { GO = v; }, true);
+chips($('signs'), ['rub', 'scrape', 'trail', 'bedding', 'tracks', 'droppings', 'other'], () => SIGN, (v) => { SIGN = v || 'other'; });
+
+/* ---------- hunt ---------- */
+const activeHunt = () => ENTRIES.find((e) => e.kind === 'hunt' && e.open);
+const huntSights = (id) => ENTRIES.filter((e) => e.huntId === id && e.species).sort((a, b) => a.ts - b.ts);
+function renderHunt() {
+  const h = activeHunt(), now = Date.now();
+  $('huntOff').hidden = !!h; $('huntOn').hidden = !h;
+  if (h) {
+    const arrived = !!h.arriveTs;
+    $('huntTitle').textContent = `Hunting${h.stand ? ' at ' + h.stand : ''}`;
+    $('huntPhase').textContent = arrived ? `${propName(h.propertyId)} · on stand since ${clock(h.arriveTs)}` : `${propName(h.propertyId)} · walking in. Tap the button when you reach your stand.`;
+    $('huntArrive').hidden = arrived;
+    $('huntStats').innerHTML = [['Total time', dur(now - h.ts)], [arrived ? 'Walked in' : 'Walking in', dur((arrived ? h.arriveTs : now) - h.ts)], ['On stand', arrived ? dur(now - h.arriveTs) : '-'], ['Sightings', String(huntSights(h.id).length)]]
+      .map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+  }
+  const b = $('huntBanner'); b.hidden = !h;
+  if (h) b.textContent = `\u{1F98C} Hunt in progress${h.stand ? ' at ' + h.stand : ''} (${dur(now - h.ts)}). Tap to manage.`;
+  const past = ENTRIES.filter((e) => e.kind === 'hunt' && !e.open).slice(0, 8);
+  $('pastHunts').innerHTML = past.map((e) => `<button class="alt" style="width:100%;text-align:left;margin-top:8px" onclick="openWrap('${e.id}')">${esc(dayOf(e.ts))} · ${esc(e.stand || propName(e.propertyId))} · ${dur((e.endTs || e.ts) - e.ts)}</button>`).join('') || '<p class="dim">No finished hunts yet.</p>';
+}
+$('huntStart').onclick = async () => {
+  const p = await here();
+  try { await call('/api/scout/hunt', { action: 'start', stand: $('stand').value, propertyId: $('prop').value, lat: p.lat, lng: p.lng }); $('huntMsg').textContent = ''; }
+  catch (e) { $('huntMsg').textContent = isNet(e) ? 'No signal right now. Start the hunt when you have a bar or two.' : 'Could not start: ' + e.message; return; }
+  await load(); renderHunt();
+};
+$('huntArrive').onclick = async () => {
+  const h = activeHunt(); if (!h) return;
+  const p = await here(), pr = PROPS.find((x) => x.id === h.propertyId);
+  let stand = h.stand || $('stand').value;
+  if (!stand && p.lat != null && pr) {
+    const near = (pr.stands || []).map((st) => ({ st, d: dM(p, st) })).sort((a, b) => a.d - b.d)[0];
+    if (near && near.d < 60) stand = near.st.name;
+  }
+  const ts = Date.now(), r = await callQ('/api/scout/hunt', { action: 'arrive', id: h.id, lat: p.lat, lng: p.lng, stand, ts });
+  if (r.queued) { OV[h.id] = { ...(OV[h.id] || {}), arriveTs: ts, arriveLat: p.lat, arriveLng: p.lng, stand }; Object.assign(h, OV[h.id]); }
+  await load(); renderHunt();
+};
+$('huntEnd').onclick = async () => {
+  const h = activeHunt(); if (!h) return;
+  await flushTrack();
+  const ts = Date.now(), note = $('hres').value, r = await callQ('/api/scout/hunt', { action: 'end', id: h.id, note, ts });
+  if (r.queued) { OV[h.id] = { ...(OV[h.id] || {}), open: false, endTs: ts, caption: note }; Object.assign(h, OV[h.id]); }
+  $('hres').value = ''; trackSync(); await load(); openWrap(h.id);
+};
+
+/* GPS runs while a hunt is on (breadcrumbs for the hunt report) or the Hunting tab is open (boundary and house warnings). The page has to stay open. */
+let WATCH = null, FLUSH = null, TBUF = [], LASTPT = null, LIVE = null;
+function trackStart() {
+  if (WATCH != null || !navigator.geolocation) return;
+  WATCH = navigator.geolocation.watchPosition((p) => {
+    LIVE = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }; renderSafety();
+    if (!activeHunt() || p.coords.accuracy > 60) return;
+    const pt = [Date.now(), +p.coords.latitude.toFixed(6), +p.coords.longitude.toFixed(6)];
+    if (LASTPT && dM(ll(LASTPT), ll(pt)) < 8 && pt[0] - LASTPT[0] < 60000) return;
+    LASTPT = pt; TBUF.push(pt);
+  }, () => {}, { enableHighAccuracy: true, maximumAge: 5000 });
+  FLUSH = setInterval(flushTrack, 45000);
+}
+function trackStop() { if (WATCH != null) navigator.geolocation.clearWatch(WATCH); WATCH = null; clearInterval(FLUSH); FLUSH = null; LASTPT = null; LIVE = null; }
+async function flushTrack() {
+  const h = activeHunt(); if (!h || !TBUF.length) return;
+  const pts = TBUF.splice(0);
+  try { await call('/api/scout/hunt', { action: 'track', id: h.id, pts }); } catch (e) { TBUF.unshift(...pts); }
+}
+function trackSync() { (activeHunt() || CUR === 'hunt') ? trackStart() : trackStop(); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushTrack(); });
+
+/* ---------- season, tags, shooting light, boundary + house warnings ---------- */
+let SETTINGS = { seasonName: 'Bow season', seasonStart: '', seasonEnd: '', tagsTotal: 0, tagsUsed: 0, houseYd: 150, edgeYd: 50 };
+const SETKEYS = ['seasonName', 'seasonStart', 'seasonEnd', 'tagsTotal', 'tagsUsed', 'houseYd', 'edgeYd'];
+async function loadSettings() { try { SETTINGS = await (await fetch('/api/scout/settings', { headers: AUTH() })).json(); } catch (e) {} renderSeason(); }
+const dayDiff = (iso) => Math.round((new Date(iso + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
+function renderSeason() {
+  const st = SETTINGS, parts = [];
+  if (st.seasonStart && st.seasonEnd) {
+    const a = dayDiff(st.seasonStart), b = dayDiff(st.seasonEnd);
+    parts.push(a > 0 ? `${st.seasonName} opens in ${a} day${a === 1 ? '' : 's'}` : b >= 0 ? `${st.seasonName} is open: ${b} day${b === 1 ? '' : 's'} left` : `${st.seasonName} has ended`);
+  } else parts.push('Set your season dates and tags with Edit below.');
+  if (st.tagsTotal) parts.push(`Tags: ${Math.max(0, st.tagsTotal - st.tagsUsed)} of ${st.tagsTotal} left`);
+  $('seasonTxt').textContent = parts.join(' · ');
+  SETKEYS.forEach((k) => { if (document.activeElement !== $('f_' + k)) $('f_' + k).value = st[k]; });
+}
+$('seasonEdit').onclick = () => { $('seasonForm').hidden = !$('seasonForm').hidden; };
+$('seasonSave').onclick = async () => { const b = {}; SETKEYS.forEach((k) => { b[k] = $('f_' + k).value; }); SETTINGS = await call('/api/scout/settings', b); $('seasonForm').hidden = true; renderSeason(); };
+async function loadLight() {
+  try {
+    const d = await (await fetch('/api/scout/day?propertyId=' + encodeURIComponent($('prop').value), { headers: AUTH() })).json();
+    if (d.sunrise) $('lightTxt').textContent = `Today at ${d.propertyName.trim()}: first light ${clock(d.firstLight)}, last light ${clock(d.lastLight)} (about 30 min before sunrise to 30 min after sunset. These can be several minutes off, so confirm with your regulations).`;
+  } catch (e) {}
+}
+function loadSeason() { renderSeason(); loadLight(); }
+
+function inPoly(pt, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [yi, xi] = poly[i], [yj, xj] = poly[j];
+    if ((yi > pt.lat) !== (yj > pt.lat) && pt.lng < ((xj - xi) * (pt.lat - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+function distToPoly(pt, poly) {
+  const k = Math.cos(pt.lat * Math.PI / 180); let best = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    const ax = (a[1] - pt.lng) * 111320 * k, ay = (a[0] - pt.lat) * 111200, bx = (b[1] - pt.lng) * 111320 * k, by = (b[0] - pt.lat) * 111200;
+    const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy, t = l2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / l2)) : 0;
+    best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+  }
+  return best;
+}
+function renderSafety() {
+  const box = $('safety'), h = activeHunt();
+  if (!LIVE || CUR !== 'hunt') { box.hidden = true; return; }
+  const bsOf = (p) => p.boundaries || (p.boundary ? [p.boundary] : []);
+  const pr = PROPS.find((p) => p.id === ($('prop').value || (h && h.propertyId))) || PROPS.find((p) => bsOf(p).some((b) => inPoly(LIVE, b)));
+  if (!pr) { box.hidden = true; return; }
+  const bs = bsOf(pr), inside = bs.some((b) => inPoly(LIVE, b)), edge = bs.length ? Math.min(...bs.map((b) => distToPoly(LIVE, b))) : null;
+  const house = (pr.houses || []).length ? Math.min(...pr.houses.map((c) => dM(LIVE, { lat: c[0], lng: c[1] }))) : null, yd = (m) => Math.round(m * 1.0936), warns = [];
+  if (bs.length && !inside) warns.push(`You are outside the ${pr.name.trim()} boundary.`);
+  else if (edge != null && yd(edge) <= SETTINGS.edgeYd) warns.push(`Only ${yd(edge)} yd from the property line.`);
+  if (house != null && yd(house) <= SETTINGS.houseYd) warns.push(`${yd(house)} yd from a house (your limit is ${SETTINGS.houseYd} yd).`);
+  box.hidden = false; box.classList.toggle('warn', warns.length > 0);
+  box.innerHTML = (warns.length ? `<b>${esc(warns.join(' '))}</b><br>` : '') + `<span class="dim" style="color:inherit">${esc(pr.name.trim())}: ${bs.length ? (inside ? 'inside the boundary' : 'outside the boundary') + (edge != null ? ', ' + yd(edge) + ' yd to the line' : '') : 'no boundary drawn'}${house != null ? ' · nearest house ' + yd(house) + ' yd' : ''} · GPS ±${Math.round(LIVE.acc)} m. Check your local rules for legal distances.</span>`;
+}
+
+/* ---------- hunt report ---------- */
+function openWrap(id) { WRAP = id; show('wrap'); }
+function tally(list) {
+  const by = {}; list.forEach((s) => { const k = s.species + '|' + s.method; by[k] = (by[k] || 0) + (s.count || 1); });
+  return Object.entries(by).map(([k, n]) => { const [sp, me] = k.split('|'); return me === 'seen' ? `${n} ${sp}` : `${n} ${sp} (${me})`; });
+}
+async function renderWrap() {
+  const h = ENTRIES.find((x) => x.id === WRAP); if (!h) { show('hunt'); return; }
+  const tr = await fetch('/api/scout/track/' + h.id, { headers: AUTH() }).then((r) => r.json()).then((j) => j.pts || []).catch(() => []);
+  if (CUR !== 'wrap' || WRAP !== h.id) return;
+  const end = h.endTs || Date.now(), arrive = h.arriveTs, total = end - h.ts, walkIn = arrive ? arrive - h.ts : null, sit = arrive ? end - arrive : null;
+  const start = h.lat != null ? { lat: h.lat, lng: h.lng } : null, stand = h.arriveLat != null ? { lat: h.arriveLat, lng: h.arriveLng } : null;
+  const inPts = [start, ...tr.filter((p) => !arrive || p[0] <= arrive).map(ll), arrive ? stand : null].filter(Boolean);
+  const walkDist = pathDist(inPts), allDist = pathDist([start, ...tr.map(ll), stand].filter(Boolean));
+  const sights = huntSights(h.id), media = ENTRIES.filter((x) => x.huntId === h.id && (x.kind === 'photo' || x.kind === 'video'));
+  const shotsH = ENTRIES.filter((x) => x.kind === 'shot' && x.huntId === h.id).sort((a, b) => a.ts - b.ts);
+  const wx = h.wx ? `wind ${compass(h.wx.windDir)} ${Math.round(h.wx.windMph)} mph, ${Math.round(h.wx.tempF)}°F, ${h.wx.pressureInHg} inHg` : '';
+  const sets = tally(sights), seen = sights.filter((s) => s.method === 'seen');
+
+  $('wrapTitle').textContent = h.stand ? `Hunt at ${h.stand}` : 'Hunt report';
+  $('wrapSub').textContent = `${dayOf(h.ts)} · ${propName(h.propertyId)} · ${clock(h.ts)} to ${h.endTs ? clock(h.endTs) : 'now'}`;
+  $('wrapStats').innerHTML = [['Total time', dur(total)], ['Walked in', walkIn != null ? `${dur(walkIn)} · ${fmtDist(walkDist)}` : 'not marked'], ['On stand', sit != null ? dur(sit) : 'not marked'], ['Distance walked', allDist ? fmtDist(allDist) : '-'], ['Sightings', String(sights.length)], ['Shots', String(shotsH.length)], ['Photos & videos', String(media.length)]]
+    .map(([k, v]) => `<div class="stat"><b>${esc(v)}</b><span>${k}</span></div>`).join('');
+
+  const t = [`On ${dayOf(h.ts)} you hunted${h.stand ? ' ' + h.stand : ''} for ${dur(total)}.`];
+  if (arrive) t.push(`You walked in for ${dur(walkIn)} (${fmtDist(walkDist)}) and sat ${dur(sit)} on stand.`); else t.push('You did not mark when you reached your stand.');
+  if (wx) t.push(`Conditions when you started: ${wx}.`);
+  if (sights.length) {
+    t.push(`You logged ${sights.length} ${sights.length === 1 ? 'sighting' : 'sightings'}: ${sets.join(', ')}.`);
+    t.push(`The first one came ${dur(sights[0].ts - (arrive || h.ts))} after you ${arrive ? 'settled in' : 'started'}${seen.length ? `, and you last saw something at ${clock(seen[seen.length - 1].ts)}` : ''}.`);
+  } else t.push('You did not log any animals this hunt.');
+  if (media.length) t.push(`You shot ${media.length} photos and videos.`);
+  if (shotsH.length) t.push(`You took ${shotsH.length} ${shotsH.length === 1 ? 'shot' : 'shots'}: ${shotsH.map((x) => `${x.distYd ? x.distYd + ' yd, ' : ''}${x.result || 'unknown'}`).join('; ')}.`);
+  $('wrapShots').innerHTML = shotsH.map((x) => `<button class="alt" style="width:100%;text-align:left;margin-top:8px" onclick="openRecover('${x.id}')">\u{1F3F9} Shot report: ${x.distYd ? x.distYd + ' yd, ' : ''}${esc(x.result || 'unknown')}</button>`).join('');
+  if (h.caption) t.push(`Your note: "${h.caption}"`);
+  $('wrapText').textContent = t.join(' ');
+
+  const ev = [{ ts: h.ts, txt: 'Started, heading in' }];
+  if (arrive) ev.push({ ts: arrive, txt: `Reached ${h.stand || 'your stand'}` });
+  sights.forEach((s) => ev.push({ ts: s.ts, txt: s.caption }));
+  shotsH.forEach((x) => ev.push({ ts: x.ts, txt: `\u{1F3F9} Shot${x.distYd ? ' at ' + x.distYd + ' yd' : ''}: ${x.result || 'unknown'}` }));
+  if (h.endTs) ev.push({ ts: h.endTs, txt: 'Ended hunt' });
+  $('wrapTl').innerHTML = ev.sort((a, b) => a.ts - b.ts).map((e) => `<div><b>${clock(e.ts)}</b> ${esc(e.txt)}</div>`).join('');
+
+  setTimeout(() => {
+    const m = freshMap('wrapmap'); if (!m) return;
+    const pts = [];
+    const add = (ln) => { pts.push(ln); return ln; };
+    if (tr.length) L.polyline(tr.map((p) => add([p[1], p[2]])), { color: '#f59e0b', weight: 4 }).addTo(m);
+    if (start) L.circleMarker(add([start.lat, start.lng]), { radius: 8, color: '#fff', weight: 2, fillColor: '#22c55e', fillOpacity: 1 }).bindPopup('Start').addTo(m);
+    if (stand) L.circleMarker(add([stand.lat, stand.lng]), { radius: 8, color: '#fff', weight: 2, fillColor: '#92400e', fillOpacity: 1 }).bindPopup(h.stand || 'Stand').addTo(m);
+    sights.filter((s) => s.lat != null).forEach((s) => L.circleMarker(add([s.lat, s.lng]), { radius: 7, color: '#fff', weight: 2, fillColor: '#ef4444', fillOpacity: 1 }).bindPopup(clock(s.ts) + ' ' + esc(s.caption)).addTo(m));
+    shotsH.forEach((x) => { if (x.lat != null) L.circleMarker(add([x.lat, x.lng]), { radius: 7, color: '#fff', weight: 2, fillColor: '#2563eb', fillOpacity: 1 }).bindPopup('Shot from here').addTo(m); if (x.aLat != null) L.circleMarker(add([x.aLat, x.aLng]), { radius: 7, color: '#fff', weight: 2, fillColor: '#111827', fillOpacity: 1 }).bindPopup('Animal when shot').addTo(m); });
+    m.invalidateSize();
+    if (pts.length) m.fitBounds(L.latLngBounds(pts), { padding: [30, 30], maxZoom: 18 }); else m.setView([39.5, -98.35], 4);
+  }, 50);
+}
+
+/* ---------- I see something ---------- */
+function updateSee() {
+  const m = METHMAP[METH];
+  $('dirBox').hidden = m !== 'heard'; $('goBox').hidden = m !== 'seen';
+  $('dirBox').firstElementChild.textContent = m === 'heard' ? 'Which direction did the sound come from?' : '';
+}
+function updateWhere() {
+  $('wGps').classList.toggle('on', WHERE === 'gps'); $('wMap').classList.toggle('on', WHERE === 'map');
+  $('wInfo').textContent = WHERE === 'map' && SEEPOS ? `Picked spot: ${SEEPOS.lat.toFixed(5)}, ${SEEPOS.lng.toFixed(5)}` : 'Uses your phone GPS.';
+  updateSee();
+}
+$('wGps').onclick = () => { WHERE = 'gps'; SEEPOS = null; updateWhere(); };
+$('wMap').onclick = () => openPick('see');
+$('sbtn').onclick = async () => {
+  $('smsg').textContent = 'Saving...';
+  const base = WHERE === 'map' && SEEPOS ? SEEPOS : await here(), h = activeHunt(), method = METHMAP[METH];
+  let lat = base.lat, lng = base.lng; const bits = [];
+  if (method === 'heard' && DIR) {
+    const deg = DIRS.indexOf(DIR) * 45; bits.push(`heard from the ${DIR}${DIST ? ', ' + DIST : ''}`);
+    if (lat != null) { const d = DISTM[DIST] || 137, rad = deg * Math.PI / 180; lat = base.lat + d * Math.cos(rad) / 111200; lng = base.lng + d * Math.sin(rad) / (111320 * Math.cos(base.lat * Math.PI / 180)); }
+  }
+  if (method === 'seen' && GO) bits.push(`headed ${GO}`);
+  try {
+    const r = await callQ('/api/scout/sighting', { species: SP, method, count: Number($('scount').value) || 1, note: [...bits, $('snote').value].filter(Boolean).join(' · '), propertyId: $('prop').value, huntId: h && h.id, lat, lng,
+      heading: method === 'heard' && DIR ? DIRS.indexOf(DIR) * 45 : undefined, travel: method === 'seen' && GO ? DIRS.indexOf(GO) * 45 : undefined });
+    $('smsg').textContent = r.queued ? 'Saved on your phone. It sends when you have signal.' : 'Logged.'; $('snote').value = ''; $('scount').value = 1; WHERE = 'gps'; SEEPOS = null; updateWhere(); load();
+  } catch (e) { $('smsg').textContent = 'Failed: ' + e.message; }
+};
+$('signBtn').onclick = async () => {
+  $('signMsg').textContent = 'Saving...';
+  const p = await here();
+  try {
+    const r = await callQ('/api/scout/note', { sign: SIGN, caption: `Sign: ${SIGN}${$('signNote').value ? ' - ' + $('signNote').value : ''}`, propertyId: $('prop').value, lat: p.lat, lng: p.lng });
+    $('signMsg').textContent = r.queued ? 'Saved on your phone. It sends when you have signal.' : `Logged ${SIGN}${p.lat != null ? ' with your location' : ' (no location found)'}.`; $('signNote').value = ''; load();
+  } catch (e) { $('signMsg').textContent = 'Failed: ' + e.message; }
+};
+
+/* ---------- upload ---------- */
+/* Every file gets a fingerprint (name+size+date). The server refuses duplicates, so re-selecting a whole folder is safe. */
+const fpOf = (f) => `${f.name}|${f.size}|${f.lastModified}`;
+const FAILED = { location: [], media: [], spot: [] };
+
+/* Photos are shrunk to a JPEG before sending. That fixes iPhone HEIC files that show as black boxes and makes uploads much faster. Videos go as-is. */
+async function prepare(f, tag) {
+  const heic = /hei[cf]/i.test(f.type + f.name);
+  if (!f.type.startsWith('image/') && !heic) return f;
+  if (!heic && f.size < 700e3) return f;
+  try {
+    const bmp = await createImageBitmap(f);
+    const max = tag === 'location' ? 2000 : 2400, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.85));
+    return blob && blob.size ? blob : f;
+  } catch (e) { return f; }
+}
+function xhrPost(url, headers, body, onProg) {
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest(); x.open('POST', url);
+    Object.entries(headers).forEach(([k, v]) => x.setRequestHeader(k, v));
+    x.upload.onprogress = (e) => { if (e.lengthComputable) onProg(e.loaded / e.total); };
+    x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {} resolve({ ok: x.status < 300, status: x.status, j }); };
+    x.onerror = () => reject(new Error('connection dropped'));
+    x.send(body);
+  });
+}
+async function sendOne(f, tag, onProg, ctx) {
+  const body = await prepare(f, tag);
+  const h = { ...AUTH(), 'content-type': body.type || f.type || 'application/octet-stream', 'x-fp': fpOf(f), 'x-tag': tag === 'location' ? 'location' : '', 'x-filename': encodeURIComponent(f.name), 'x-caption': encodeURIComponent(tag === 'location' ? '' : $(tag === 'spot' ? 'scap' : 'cap').value), 'x-ts': String(f.lastModified || Date.now()) };
+  if ($('prop').value) h['x-prop'] = $('prop').value;
+  if (tag === 'spot' && SPOT) h['x-from'] = SPOT;
+  if (tag === 'media' && ctx) { if (ctx.lat != null) { h['x-lat'] = ctx.lat; h['x-lng'] = ctx.lng; } if (ctx.hunt) h['x-hunt'] = ctx.hunt; }
+  let lastErr = 'server error';
+  for (let t = 1; t <= 3; t++) {
+    try {
+      const r = await xhrPost('/api/scout', h, body, onProg);
+      if (r.ok) return r.j.duplicate ? 'dup' : 'ok';
+      lastErr = (r.j && r.j.error) || ('error ' + r.status);
+      if (r.status < 500) throw new Error(lastErr);
+    } catch (e) { lastErr = e.message; if (/error 4|too large|Send an image/i.test(lastErr)) throw e; }
+    onProg(0);
+    await new Promise((r) => setTimeout(r, 1500 * t));
+  }
+  if (/connection dropped/i.test(lastErr)) { await QADD({ kind: 'file', headers: h, blob: body }); updateQ(); return 'queued'; }
+  throw new Error(lastErr);
+}
+async function upload(files, tag) {
+  if (!files.length) return;
+  const id = { location: ['mprog', 'mretry', 'mbar', 'mfill'], media: ['prog', 'retry', 'bar', 'fill'], spot: ['sprog', 'sretry', 'sbar', 'sfill'] }[tag];
+  const prog = $(id[0]), retry = $(id[1]), bar = $(id[2]), fill = $(id[3]);
+  let ctx = null;
+  if (tag === 'media') {
+    const h0 = activeHunt(); ctx = { hunt: h0 && h0.id };
+    if ($('tagGps').checked) { prog.textContent = 'Getting your location...'; const p = await here(); ctx.lat = p.lat; ctx.lng = p.lng; }
+  }
+  let ok = 0, dup = 0, queued = 0; const failed = FAILED[tag] = [], why = [];
+  retry.hidden = true; bar.hidden = false; fill.style.width = '0%';
+  for (let i = 0; i < files.length; i++) {
+    const say = (fr) => { fill.style.width = ((i + fr) / files.length * 100).toFixed(1) + '%'; prog.textContent = `Sending ${i + 1} of ${files.length} (${Math.round(fr * 100)}%): ${files[i].name}\nSaved ${ok}, already had ${dup}, failed ${failed.length}`; };
+    say(0);
+    try { const r0 = await sendOne(files[i], tag, say, ctx); if (r0 === 'dup') dup++; else if (r0 === 'queued') queued++; else ok++; } catch (e) { failed.push(files[i]); why.push(`${files[i].name} (${e.message})`); }
+  }
+  fill.style.width = '100%';
+  prog.textContent = `Done. ${files.length} selected: ${ok} saved, ${dup} already logged, ${failed.length} failed.` + (queued ? `\n${queued} are saved on your phone and send when you have signal.` : '') + (failed.length ? '\nFailed: ' + why.join(', ') : queued ? '' : ' Everything is in.');
+  retry.hidden = !failed.length;
+  await load();
+}
+function wire(zone, input, tag) {
+  zone.onclick = () => input.click();
+  zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('over'); };
+  zone.ondragleave = () => zone.classList.remove('over');
+  zone.ondrop = (e) => { e.preventDefault(); zone.classList.remove('over'); upload([...e.dataTransfer.files], tag); };
+  input.onchange = (e) => { const fs = [...e.target.files]; e.target.value = ''; upload(fs, tag); };
+}
+wire($('mdrop'), $('mfile'), 'location');
+wire($('drop'), $('file'), 'media');
+wire($('sdrop'), $('sfile'), 'spot');
+$('sretry').onclick = () => upload(FAILED.spot, 'spot');
+$('mretry').onclick = () => upload(FAILED.location, 'location');
+$('retry').onclick = () => upload(FAILED.media, 'media');
+
+/* ---------- pick a spot on the map ---------- */
+let MAP = null, MARK = null, PICK = null, LAYERS = [];
+const TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+function openPick(mode) { PICK_MODE = mode; show('pick'); }
+$('pickBtn').onclick = () => openPick('spot');
+function initPick() {
+  if (typeof L === 'undefined') { $('pickCoord').textContent = 'The map could not load. Check your connection.'; return; }
+  const pr = PROPS.find((p) => p.id === $('prop').value) || PROPS[0];
+  if (!MAP) {
+    MAP = L.map('pickmap', { zoomControl: true }); L.tileLayer(TILES, { maxZoom: 19, attribution: 'Esri' }).addTo(MAP);
+    MAP.on('click', (e) => {
+      PICK = e.latlng;
+      if (MARK) MARK.setLatLng(e.latlng); else MARK = L.circleMarker(e.latlng, { radius: 10, color: '#fff', weight: 3, fillColor: '#ef4444', fillOpacity: 1 }).addTo(MAP);
+      $('pickCoord').textContent = `Spot: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`; $('pickSave').disabled = false;
+    });
+  }
+  MAP.invalidateSize();
+  $('pickTitle').textContent = PICK_MODE === 'see' ? 'Where was it?' : 'Choose Your Spot'; $('pickName').hidden = PICK_MODE === 'see'; $('pickSave').textContent = PICK_MODE === 'see' ? 'Use this location' : 'Save this spot';
+  LAYERS.forEach((l) => MAP.removeLayer(l)); LAYERS = [];
+  if (MARK) { MAP.removeLayer(MARK); MARK = null; } PICK = null; $('pickSave').disabled = true; $('pickCoord').textContent = 'Tap the map to drop a dot.'; $('pickName').value = '';
+  if (pr && pr.boundary && pr.boundary.length) { const poly = L.polygon(pr.boundary, { color: '#e9c27a', weight: 2, fill: false }).addTo(MAP); LAYERS.push(poly); MAP.fitBounds(poly.getBounds(), { padding: [20, 20] }); }
+  else if (pr && pr.center) MAP.setView([pr.center.lat, pr.center.lng], 17); else MAP.setView([39.5, -98.35], 4);
+  ENTRIES.filter((e) => e.kind === 'location' && e.lat != null && (!pr || e.propertyId === pr.id)).forEach((e) => LAYERS.push(L.circleMarker([e.lat, e.lng], { radius: 6, color: '#fff', weight: 2, fillColor: '#b45309', fillOpacity: 1 }).addTo(MAP)));
+}
+$('pickSave').onclick = async () => {
+  if (!PICK) return;
+  if (PICK_MODE === 'see') { SEEPOS = { lat: PICK.lat, lng: PICK.lng }; WHERE = 'map'; show('see'); return; }
+  const e = await call('/api/scout/spot', { lat: PICK.lat, lng: PICK.lng, name: $('pickName').value, propertyId: $('prop').value });
+  await load();
+  openSpot(e.id);
+};
+
+/* ---------- scouting plans ---------- */
+let PLANS = [];
+async function loadPlans() { try { PLANS = (await (await fetch('/api/scout/plans', { headers: AUTH() })).json()).plans || []; } catch (e) { PLANS = []; } }
+async function renderPlans() {
+  await loadPlans();
+  const pid = $('prop').value, list = PLANS.filter((p) => !pid || p.propertyId === pid);
+  $('planList').innerHTML = list.map((p) => `<div class="box"><span class="slab" style="font-size:18px">${esc(p.name || 'Scouting walk')}</span><div class="dim">${esc(p.propertyName)} · ${fmtDist(p.distM || 0)} · about ${p.minutes || '?'} min · ${p.stops.length} stops</div><button class="big" onclick="openPlan('${p.propertyId}','${p.id}')">Open plan</button></div>`).join('')
+    || `<div class="box dim">No planned scouting walks${pid ? ' on this property' : ''} yet. Plan one in CabinScout and it shows up here.</div>`;
+}
+function openPlan(pid, id) { PLAN = PLANS.find((p) => p.propertyId === pid && p.id === id); show('plan'); }
+const doneKey = (id) => 'planDone:' + id;
+function doneStops(id) { try { return JSON.parse(localStorage.getItem(doneKey(id)) || '[]'); } catch (e) { return []; } }
+function toggleStop(id, i, on) { const d = new Set(doneStops(id)); on ? d.add(i) : d.delete(i); try { localStorage.setItem(doneKey(id), JSON.stringify([...d])); } catch (e) {} }
+function renderPlan() {
+  const p = PLAN; if (!p) { show('plans'); return; }
+  $('planTitle').textContent = p.name || 'Scouting walk';
+  $('planSub').textContent = `${p.propertyName} · ${fmtDist(p.distM || 0)} · about ${p.minutes || '?'} min`;
+  const done = doneStops(p.id);
+  $('planStops').innerHTML = p.stops.map((s, i) => `<div class="box" style="margin:10px 0"><label class="check" style="margin:0;color:var(--cream)"><input type="checkbox" ${done.includes(i) ? 'checked' : ''} onchange="toggleStop('${p.id}',${i},this.checked)"> <b>Stop ${i + 1}</b></label><div class="dim" style="margin-top:6px">${esc(s.note)}</div><button class="alt" style="margin-top:8px" data-go="scout">Log sign here</button></div>`).join('');
+  if (p.start) $('planNav').href = `https://www.google.com/maps/dir/?api=1&destination=${p.start[0]},${p.start[1]}&travelmode=walking`;
+  setTimeout(() => {
+    const m = freshMap('planmap'); if (!m) return;
+    const line = L.polyline(p.pts, { color: '#f59e0b', weight: 4 }).addTo(m);
+    if (p.start) L.circleMarker(p.start, { radius: 8, color: '#fff', weight: 2, fillColor: '#22c55e', fillOpacity: 1 }).bindPopup('Start').addTo(m);
+    p.stops.forEach((s, i) => { if (s.lat != null) L.marker([s.lat, s.lng], { icon: L.divIcon({ className: '', iconSize: [26, 26], html: `<div style="width:26px;height:26px;border-radius:50%;background:#b45309;color:#fff;border:2px solid #fff;font:700 13px Georgia;display:grid;place-items:center">${i + 1}</div>` }) }).addTo(m); });
+    m.invalidateSize(); m.fitBounds(line.getBounds(), { padding: [24, 24] });
+    $('planLoc').onclick = () => navigator.geolocation.getCurrentPosition((g) => { const at = [g.coords.latitude, g.coords.longitude]; L.circleMarker(at, { radius: 9, color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1 }).addTo(m); m.panTo(at); }, () => {}, { enableHighAccuracy: true });
+  }, 50);
+}
+
+/* ---------- log ---------- */
+function imgFail(el) { el.replaceWith(Object.assign(document.createElement('div'), { className: 'pin', textContent: '\u{1F4F7} preview unavailable' })); }
+/* A small satellite picture with a dot on the spot, built from 3x3 map tiles so no screenshot is needed. */
+function miniMap(lat, lng) {
+  const z = 17, n = 2 ** z, r = lat * Math.PI / 180;
+  const x = (lng + 180) / 360 * n, y = (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n;
+  const xt = Math.floor(x), yt = Math.floor(y), px = (1 + x - xt) * 256, py = (1 + y - yt) * 256;
+  let tiles = '';
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) tiles += `<img src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${yt - 1 + j}/${xt - 1 + i}" style="left:${i * 256}px;top:${j * 256}px" alt="">`;
+  return `<div class="minimap"><div class="mm" style="margin-left:${-px}px;margin-top:${-py}px">${tiles}</div><span class="dot"></span></div>`;
+}
+const isShot = (e) => e.tag === 'location' || e.kind === 'location';
+function card(e, extra = '') {
+  const where = e.lat != null ? `<a href="https://www.google.com/maps?q=${e.lat},${e.lng}" target="_blank">${(+e.lat).toFixed(5)}, ${(+e.lng).toFixed(5)}</a>` : '<span class="dim">no location</span>';
+  let media, cap = esc(e.caption);
+  if (e.kind === 'location' && e.lat != null) media = miniMap(e.lat, e.lng);
+  else if (e.kind === 'photo') media = `<img src="${esc(asset(e.file))}" loading="lazy" onerror="imgFail(this)">`;
+  else if (e.kind === 'video') media = `<video src="${esc(asset(e.file))}" controls preload="metadata"></video>`;
+  else if (e.kind === 'hunt') { media = '<div class="pin">&#129420;</div>'; cap = `<b>Hunt${e.stand ? ' at ' + esc(e.stand) : ''}</b> · ${e.open ? 'in progress' : dur((e.endTs || e.ts) - e.ts)}${e.caption ? '<br>' + esc(e.caption) : ''}`; }
+  else if (e.kind === 'shot') { media = '<div class="pin">&#127993;</div>'; cap = `<b>Shot${e.distYd ? ' at ' + e.distYd + ' yd' : ''}</b> \u00b7 ${esc(e.result || 'unknown')}${e.hit ? ', ' + esc(e.hit) : ''}${e.caption ? '<br>' + esc(e.caption) : ''}`; }
+  else media = `<div class="pin">${e.kind === 'location' ? '&#128205;' : e.sign ? '&#129406;' : '&#128221;'}</div>`;
+  const label = e.tag === 'location' ? (e.lat == null ? ' <span class="tag">screenshot, needs coordinates</span>' : ' <span class="tag">spot</span>') : '';
+  const bucks = ((PROPS.find((p) => p.id === e.propertyId) || {}).bucks) || [];
+  const buckSel = (e.kind === 'photo' || e.kind === 'video') && !isShot(e) ? `<select onchange="tagBuck('${e.id}', this.value)" style="margin:0 0 6px"><option value="">Which buck? (none)</option>${bucks.map((b) => `<option value="${b.id}" ${e.buckId === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select>` : '';
+  return `<div class="item">${media}<div class="meta"><div class="tag">${esc(propName(e.propertyId))} &middot; ${e.kind} &middot; ${new Date(e.ts).toLocaleString()}</div>${cap ? `<p>${cap}</p>` : ''}<p>${where}${label}</p><div class="row" style="margin:0 0 6px"><input type="text" id="c${e.id}" placeholder="lat, lng"><button class="alt" onclick="setLoc('${e.id}')">Set</button></div>${e.kind === 'hunt' ? `<button onclick="openWrap('${e.id}')" style="margin-bottom:6px;width:100%">Hunt report</button>` : ''}${buckSel}${e.kind === 'shot' ? `<button onclick="openRecover('${e.id}')" style="margin-bottom:6px;width:100%">Shot report</button>` : ''}${extra}<button class="alt" onclick="del('${e.id}')">Delete</button></div></div>`;
+}
+function renderLog() {
+  if (document.activeElement && document.activeElement.closest && document.activeElement.closest('#list')) return;
+  const f = $('filt').value, list = ENTRIES.filter((e) => !f || e.propertyId === f);
+  const n = (k) => ENTRIES.filter((e) => e.kind === k && !isShot(e)).length;
+  $('bot').textContent = `${n('photo')} photos, ${n('video')} videos, ${ENTRIES.filter(isShot).length} spots, ${n('hunt')} hunts, ${n('note')} notes`;
+  $('list').innerHTML = list.map((e) => card(e)).join('') || '<p class="dim">Nothing logged yet.</p>';
+}
+function renderMaps() {
+  if (document.activeElement && document.activeElement.closest && document.activeElement.closest('#mlist')) return;
+  const spots = ENTRIES.filter(isShot).sort((a, b) => (a.lat == null ? -1 : 0) - (b.lat == null ? -1 : 0) || b.ts - a.ts), todo = spots.filter((e) => e.lat == null).length;
+  $('mstat').textContent = spots.length ? `${spots.length} spots${todo ? `, ${todo} screenshots still need coordinates (type them under the picture, or tell Claude to read them)` : ''}.` : '';
+  $('mlist').innerHTML = spots.map((e) => {
+    const m = ENTRIES.filter((x) => x.locFrom === e.id && !isShot(x)), ph = m.filter((x) => x.kind === 'photo').length, vi = m.filter((x) => x.kind === 'video').length;
+    return card(e, `<p class="tag" style="margin:6px 0">${m.length ? `${vi} videos, ${ph} photos attached` : 'no media attached yet'}</p>${e.lat != null ? `<button onclick="openSpot('${e.id}')" style="margin-bottom:6px;width:100%">Open spot &amp; add media</button>` : '<p class="dim">Waiting for coordinates</p>'}`);
+  }).join('');
+}
+function openSpot(id) { SPOT = id; show('spot'); }
+function renderSpot() {
+  const e = ENTRIES.find((x) => x.id === SPOT);
+  if (!e) { show('maps'); return; }
+  $('spotTitle').textContent = e.caption || 'Spot here';
+  $('spotMap').innerHTML = e.lat != null ? miniMap(e.lat, e.lng) : '';
+  $('spotInfo').textContent = `${propName(e.propertyId)} · ${e.lat != null ? (+e.lat).toFixed(5) + ', ' + (+e.lng).toFixed(5) : 'no coordinates yet'}`;
+  if (document.activeElement !== $('sname')) $('sname').value = e.caption || '';
+  const m = ENTRIES.filter((x) => x.locFrom === e.id && !isShot(x));
+  $('sstat').textContent = m.length ? `${m.filter((x) => x.kind === 'video').length} videos, ${m.filter((x) => x.kind === 'photo').length} photos at this spot.` : 'No media at this spot yet.';
+  if (!(document.activeElement && document.activeElement.closest && document.activeElement.closest('#sgrid'))) $('sgrid').innerHTML = m.map((x) => card(x)).join('');
+}
+$('sren').onclick = async () => { if (!SPOT) return; await call('/api/scout/' + SPOT, { caption: $('sname').value }, 'PATCH'); await load(); };
+async function setLoc(id) {
+  const m = /(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/.exec($('c' + id).value);
+  if (!m) { $('c' + id).placeholder = 'need lat, lng'; return; }
+  await call('/api/scout/' + id, { lat: +m[1], lng: +m[2] }, 'PATCH'); load();
+}
+async function del(id) { if (confirm('Delete this entry?')) { await call('/api/scout/' + id, null, 'DELETE'); load(); } }
+
+async function load() {
+  let resp; try { resp = await fetch('/api/scout', { headers: AUTH() }); } catch (e) { updateQ(); return; }
+  if (!resp.ok) { if (resp.status === 403 && !$('noauth')) document.body.insertAdjacentHTML('afterbegin', '<p class="dim" id="noauth" style="padding:12px">Open this from the bot\'s menu button in Telegram.</p>'); return; }
+  const j = await resp.json(); K = j.k || ''; PROPS = j.properties || []; ENTRIES = j.entries || [];
+  ENTRIES.forEach((e) => { if (OV[e.id]) Object.assign(e, OV[e.id]); });
+  fillProps(); fillStands();
+  $('logSub').textContent = `${ENTRIES.length} entries logged`;
+  renderHunt(); trackSync(); if (!$('v-spot').hidden) renderSpot(); if (!$('v-log').hidden) renderLog(); if (!$('v-maps').hidden) renderMaps();
+}
+/* ---------- what I've learned ---------- */
+let INS = { events: [], stands: [] }, LSP = 'deer';
+chips($('lsp'), ['deer', 'coyote', 'turkey', 'bear', 'all'], () => LSP, (v) => { LSP = v || 'deer'; renderLearn(); });
+async function loadInsights() { const pid = $('prop').value; try { INS = await (await fetch('/api/scout/insights' + (pid ? '?propertyId=' + pid : ''), { headers: AUTH() })).json(); } catch (e) {} }
+function bars(el, rows) {
+  const mx = Math.max(1, ...rows.map((r) => r.n));
+  el.innerHTML = rows.map((r) => `<div class="brow"><span class="bl">${esc(r.label)}</span><span class="bt"><i style="width:${(r.n / mx * 100).toFixed(0)}%"></i></span><span class="bn">${r.n}</span></div>`).join('');
+}
+const topRow = (rows) => rows.slice().sort((a, b) => b.n - a.n)[0];
+async function renderLearn() {
+  await loadInsights();
+  const ev = (INS.events || []).filter((e) => (LSP === 'all' || e.species === LSP) && (LSP !== 'deer' || e.method === 'seen' || e.method === 'camera')), total = ev.reduce((a, e) => a + (e.count || 1), 0);
+  const tally = (labels, pick, src = ev) => { const rows = labels.map((label) => ({ label, n: 0 })); src.forEach((e) => { const i = pick(e); if (i != null && i >= 0 && rows[i]) rows[i].n += e.count || 1; }); return rows; };
+  const wxEv = ev.filter((e) => e.wx);
+  $('learnSub').textContent = total ? `Based on ${total} ${LSP === 'all' ? 'animal' : LSP} records from your wildlife log, cameras and sightings${wxEv.length < ev.length ? ` (weather known for ${wxEv.reduce((a, e) => a + (e.count || 1), 0)} of them)` : ''}.` : 'Nothing logged for this animal yet. Log sightings and hunts and this fills in.';
+  const hours = tally(['12-3 AM', '3-6 AM', '6-9 AM', '9-12 AM', '12-3 PM', '3-6 PM', '6-9 PM', '9-12 PM'], (e) => Math.floor(e.hour / 3));
+  bars($('chHours'), hours); const th = topRow(hours);
+  $('txHours').textContent = total && th.n ? `Most activity: ${th.label} (${Math.round(th.n / total * 100)}% of records).` : '';
+  const winds = tally(DIRS.map((d) => 'From ' + d), (e) => (e.wx && e.wx.windDir != null ? Math.round(e.wx.windDir / 45) % 8 : null), wxEv); bars($('chWind'), winds); const tw = topRow(winds);
+  $('txWind').textContent = tw && tw.n ? `You see them most with the wind ${tw.label.toLowerCase()} (${tw.n} records).` : '';
+  const temps = tally(['under 20°', '20-30°', '30-40°', '40-50°', '50-60°', '60° and up'], (e) => (e.wx && e.wx.tempF != null ? (e.wx.tempF < 20 ? 0 : e.wx.tempF < 30 ? 1 : e.wx.tempF < 40 ? 2 : e.wx.tempF < 50 ? 3 : e.wx.tempF < 60 ? 4 : 5) : null), wxEv); bars($('chTemp'), temps); const tt = topRow(temps);
+  $('txTemp').textContent = tt && tt.n ? `Busiest in the ${tt.label} range.` : '';
+  bars($('chPres'), tally(['under 29.80', '29.80-30.10', '30.10-30.40', 'over 30.40'], (e) => (e.wx && e.wx.pressureInHg != null ? (e.wx.pressureInHg < 29.8 ? 0 : e.wx.pressureInHg < 30.1 ? 1 : e.wx.pressureInHg < 30.4 ? 2 : 3) : null), wxEv));
+  const moons = {}; ev.forEach((e) => { if (e.moon) moons[e.moon.name] = (moons[e.moon.name] || 0) + (e.count || 1); });
+  bars($('chMoon'), Object.entries(moons).map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n));
+  const sRows = (INS.stands || []).map((st) => {
+    const near = ev.filter((e) => e.lat != null && e.propertyId === st.propertyId && dM(e, st) <= 137).reduce((a, e) => a + (e.count || 1), 0);
+    const hunts = ENTRIES.filter((x) => x.kind === 'hunt' && x.arriveTs && x.endTs && (x.stand || '') === st.name && x.propertyId === st.propertyId);
+    const hrs = hunts.reduce((a, x) => a + (x.endTs - x.arriveTs) / 3600000, 0), seen = hunts.reduce((a, x) => a + huntSights(x.id).filter((y) => y.species === 'deer' && y.method === 'seen').reduce((b, y) => b + (y.count || 1), 0), 0);
+    return `<p style="margin:0 0 10px"><b>${esc(propName(st.propertyId).trim())} · ${esc(st.name)}</b><br><span class="dim">${near} ${LSP === 'all' ? 'animal' : LSP} records within 150 yd · ${hunts.length} ${hunts.length === 1 ? 'hunt' : 'hunts'}, ${hrs.toFixed(1)} h on stand, ${seen} deer seen${hrs > 0.5 ? ` (${(seen / hrs).toFixed(2)} per hour)` : ''}</span></p>`;
+  });
+  $('chStand').innerHTML = sRows.join('') || '<span class="dim">No stands marked yet. Add them in CabinScout.</span>';
+  renderBucks();
+}
+function renderBucks() {
+  const pid = $('prop').value, list = PROPS.filter((p) => !pid || p.id === pid).flatMap((p) => (p.bucks || []).map((b) => ({ ...b, propertyId: p.id })));
+  $('buckList').innerHTML = list.map((b) => {
+    const m = ENTRIES.filter((e) => e.buckId === b.id && (e.kind === 'photo' || e.kind === 'video')).sort((x, y) => y.ts - x.ts), ph = m.filter((e) => e.kind === 'photo').slice(0, 5);
+    return `<div style="margin-bottom:12px"><b><span style="color:${esc(b.color)}">●</span> ${esc(b.name)}</b> <span class="dim">· ${m.length} photos and videos${m[0] ? ', last ' + dayOf(m[0].ts) : ''}</span>${ph.length ? `<div class="thumbs">${ph.map((e) => `<img src="${esc(asset(e.file))}" loading="lazy" onerror="this.remove()">`).join('')}</div>` : ''}</div>`;
+  }).join('') || '<span class="dim">No bucks named yet. Add one below, then tag his photos and videos from My Log.</span>';
+}
+$('addBuck').onclick = async () => {
+  const pid = $('prop').value || (PROPS[0] && PROPS[0].id), name = $('newBuck').value.trim(); if (!name) return;
+  try { await call('/api/scout/buck', { propertyId: pid, name }); $('newBuck').value = ''; $('buckMsg').textContent = `Added ${name} on ${propName(pid).trim()}.`; await load(); renderBucks(); } catch (e) { $('buckMsg').textContent = 'Could not add: ' + e.message; }
+};
+async function tagBuck(id, val) { await call('/api/scout/' + id, { buckId: val }, 'PATCH'); load(); }
+
+/* ---------- sign map ---------- */
+const SPCOL = { deer: '#ef4444', coyote: '#a855f7', turkey: '#3b82f6', bear: '#111827', hog: '#92400e', fox: '#f97316', bobcat: '#14b8a6', human: '#94a3b8', other: '#94a3b8' };
+const SIGNCOL = { rub: '#f59e0b', scrape: '#eab308', trail: '#38bdf8', bedding: '#c084fc', tracks: '#22c55e', droppings: '#a16207', other: '#94a3b8' };
+const TRACKS = {};
+['ly_animals', 'ly_sign', 'ly_heat', 'ly_walk', 'ly_spots', 'ly_stands'].forEach((id) => { $(id).onchange = drawSignMap; });
+async function renderSignMap() {
+  await loadInsights();
+  const pid = $('prop').value;
+  await Promise.all(ENTRIES.filter((h) => h.kind === 'hunt' && (!pid || h.propertyId === pid) && (h.trackN || 0) > 0 && !(TRACKS[h.id] && TRACKS[h.id].n === h.trackN)).map(async (h) => {
+    try { TRACKS[h.id] = { n: h.trackN, pts: (await (await fetch('/api/scout/track/' + h.id, { headers: AUTH() })).json()).pts || [] }; } catch (e) {}
+  }));
+  if (CUR === 'signmap') drawSignMap();
+}
+function drawSignMap() {
+  if (CUR !== 'signmap') return;
+  const pid = $('prop').value, pr = PROPS.find((p) => p.id === pid) || PROPS[0], m = freshMap('signmapEl'); if (!m) return;
+  const pts = [], keep = (la, ln) => pts.push([la, ln]);
+  const animals = (INS.events || []).filter((e) => e.lat != null && (!pid || e.propertyId === pid));
+  const signs = ENTRIES.filter((e) => e.sign && e.lat != null && (!pid || e.propertyId === pid));
+  const bs = pr ? pr.boundaries || [] : [];
+  bs.forEach((b) => { L.polygon(b, { color: '#e9c27a', weight: 2, fill: false }).addTo(m); b.forEach((c) => keep(c[0], c[1])); });
+  if ($('ly_heat').checked) [...animals.filter((e) => e.species === 'deer'), ...signs].forEach((e) => L.circle([e.lat, e.lng], { radius: 30, stroke: false, fillColor: '#ef4444', fillOpacity: 0.14 }).addTo(m));
+  if ($('ly_animals').checked) animals.forEach((e) => { L.circleMarker([e.lat, e.lng], { radius: 6, color: '#fff', weight: 1.5, fillColor: SPCOL[e.species] || '#94a3b8', fillOpacity: 1 }).bindPopup(`${e.count > 1 ? e.count + ' ' : ''}${esc(e.species)} (${esc(e.method)}) ${new Date(e.ts).toLocaleString()}`).addTo(m); keep(e.lat, e.lng); });
+  if ($('ly_sign').checked) signs.forEach((e) => { L.circleMarker([e.lat, e.lng], { radius: 7, color: '#000', weight: 1.5, fillColor: SIGNCOL[e.sign] || '#94a3b8', fillOpacity: 1 }).bindPopup(esc(e.caption)).addTo(m); keep(e.lat, e.lng); });
+  if ($('ly_spots').checked) ENTRIES.filter((e) => e.kind === 'location' && e.lat != null && (!pid || e.propertyId === pid)).forEach((e) => { L.circleMarker([e.lat, e.lng], { radius: 5, color: '#fff', weight: 2, fillColor: '#fff', fillOpacity: 0.4 }).bindPopup(esc(e.caption || 'Spot')).addTo(m); keep(e.lat, e.lng); });
+  if ($('ly_stands').checked && pr) {
+    (pr.stands || []).forEach((st) => { L.circleMarker([st.lat, st.lng], { radius: 8, color: '#fff', weight: 2, fillColor: '#92400e', fillOpacity: 1 }).bindTooltip(esc(st.name), { permanent: true, direction: 'top', offset: [0, -6] }).addTo(m); keep(st.lat, st.lng); });
+    (pr.houses || []).forEach((c) => L.circleMarker([c[0], c[1]], { radius: 3, color: '#6b7280', weight: 1, fillColor: '#9ca3af', fillOpacity: 1 }).addTo(m));
+  }
+  let flagged = 0, walks = 0;
+  if ($('ly_walk').checked) {
+    const wpts = [];
+    ENTRIES.filter((h) => h.kind === 'hunt' && (!pid || h.propertyId === pid)).forEach((h) => {
+      const tr = ((TRACKS[h.id] || {}).pts || []).filter((q) => !h.arriveTs || q[0] <= h.arriveTs);
+      if (tr.length > 1) { walks++; L.polyline(tr.map((q) => [q[1], q[2]]), { color: '#f59e0b', weight: 3, dashArray: '6 6' }).addTo(m); tr.forEach((q) => { wpts.push({ lat: q[1], lng: q[2] }); keep(q[1], q[2]); }); }
+    });
+    if (wpts.length) [...animals.filter((e) => e.species === 'deer' && e.method === 'seen'), ...signs].forEach((e) => { if (wpts.some((w) => dM(w, e) < 55)) { flagged++; L.circleMarker([e.lat, e.lng], { radius: 12, color: '#fbbf24', weight: 3, fill: false }).addTo(m); } });
+  }
+  $('smSub').textContent = `${animals.length} animal records and ${signs.length} sign spots with a location${pr && !pid ? ' (all properties)' : ''}.`;
+  $('smWalk').textContent = $('ly_walk').checked ? (walks ? (flagged ? `${flagged} deer or sign spots are within 60 yd of your walk-in routes (ringed in yellow). Those routes may be spooking deer or crossing their travel.` : 'None of your logged walk-ins pass close to deer or sign yet.') : 'No walk-in routes recorded yet. They are saved when you start a hunt and keep the page open.') : '';
+  setTimeout(() => { m.invalidateSize(); if (pts.length) m.fitBounds(L.latLngBounds(pts), { padding: [30, 30], maxZoom: 18 }); else if (pr && pr.center) m.setView([pr.center.lat, pr.center.lng], 16); }, 50);
+}
+
+/* ---------- bow shot + recovery ---------- */
+let SHSP = 'deer', SHRES = 'unknown', SHHIT = '', SHDIR = '';
+chips($('shsp'), ['deer', 'turkey', 'other'], () => SHSP, (v) => { SHSP = v || 'other'; });
+chips($('shdir'), DIRS, () => SHDIR, (v) => { SHDIR = v; }, true);
+chips($('shres'), ['hit', 'miss', 'unknown'], () => SHRES, (v) => { SHRES = v || 'unknown'; });
+chips($('shhit'), ['high', 'low', 'front', 'back', 'gut', 'not sure'], () => SHHIT, (v) => { SHHIT = v; }, true);
+$('huntShot').onclick = () => show('shot');
+$('shSave').onclick = async () => {
+  $('shMsg').textContent = 'Saving...';
+  const p = await here(), h = activeHunt();
+  try {
+    const r = await callQ('/api/scout/shot', { species: SHSP, distYd: $('shDist').value ? Number($('shDist').value) : undefined, dir: SHDIR ? DIRS.indexOf(SHDIR) * 45 : undefined, hit: SHRES === 'hit' ? SHHIT : '', result: SHRES, note: $('shNote').value, propertyId: $('prop').value || (h && h.propertyId) || '', huntId: h && h.id, lat: p.lat, lng: p.lng });
+    $('shNote').value = ''; $('shDist').value = '';
+    if (r.queued) { $('shMsg').textContent = 'Saved on your phone. It sends when you have signal.'; return; }
+    await load(); openRecover(r.id);
+  } catch (e) { $('shMsg').textContent = 'Failed: ' + e.message; }
+};
+function openRecover(id) { SHOTID = id; show('recover'); }
+const PTNAME = { lastseen: 'Last saw it', arrow: 'Arrow', blood: 'Blood', found: 'Found it', other: 'Mark' }, PTCOL = { lastseen: '#a855f7', arrow: '#f59e0b', blood: '#dc2626', found: '#22c55e', other: '#94a3b8' };
+function renderRecover() {
+  const sh = ENTRIES.find((x) => x.id === SHOTID); if (!sh) { show('hunt'); return; }
+  const tr = (sh.trail || []).slice().sort((a, b) => a.ts - b.ts);
+  $('rcTitle').textContent = `Shot${sh.distYd ? ' at ' + sh.distYd + ' yd' : ''}`;
+  $('rcSub').textContent = `${dayOf(sh.ts)} ${clock(sh.ts)} · ${propName(sh.propertyId).trim()} · ${sh.result || 'unknown'}${sh.hit ? ' (' + sh.hit + ')' : ''}`;
+  $('rcPoints').innerHTML = tr.map((q) => `<div><b>${clock(q.ts)}</b> ${PTNAME[q.type] || 'Mark'}</div>`).join('') || '<span class="dim">Nothing marked yet.</span>';
+  setTimeout(() => {
+    const m = freshMap('recmap'); if (!m) return; const pts = [];
+    if (sh.lat != null) { L.circleMarker([sh.lat, sh.lng], { radius: 8, color: '#fff', weight: 2, fillColor: '#2563eb', fillOpacity: 1 }).bindPopup('Shot from here').addTo(m); pts.push([sh.lat, sh.lng]); }
+    if (sh.aLat != null) { L.circleMarker([sh.aLat, sh.aLng], { radius: 8, color: '#fff', weight: 2, fillColor: '#111827', fillOpacity: 1 }).bindPopup('Animal when shot').addTo(m); pts.push([sh.aLat, sh.aLng]); if (sh.lat != null) L.polyline([[sh.lat, sh.lng], [sh.aLat, sh.aLng]], { color: '#fff', weight: 2, dashArray: '4 6' }).addTo(m); }
+    if (tr.length) L.polyline(tr.map((q) => [q.lat, q.lng]), { color: '#dc2626', weight: 3 }).addTo(m);
+    tr.forEach((q) => { L.circleMarker([q.lat, q.lng], { radius: 7, color: '#fff', weight: 2, fillColor: PTCOL[q.type] || '#94a3b8', fillOpacity: 1 }).bindPopup(`${PTNAME[q.type] || 'Mark'} ${clock(q.ts)}`).addTo(m); pts.push([q.lat, q.lng]); });
+    m.invalidateSize(); if (pts.length) m.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 19 }); else m.setView([39.5, -98.35], 4);
+  }, 50);
+}
+$('rcBtns').onclick = async (e) => {
+  const b = e.target.closest('button[data-pt]'); if (!b || !SHOTID) return;
+  $('rcMsg').textContent = 'Getting your location...';
+  const p = await here(); if (p.lat == null) { $('rcMsg').textContent = 'No GPS fix yet. Try again in a moment.'; return; }
+  const ts = Date.now(), r = await callQ('/api/scout/shot', { action: 'point', id: SHOTID, type: b.dataset.pt, lat: p.lat, lng: p.lng, ts });
+  if (r.queued) { const sh = ENTRIES.find((x) => x.id === SHOTID); if (sh) (sh.trail = sh.trail || []).push({ type: b.dataset.pt, lat: p.lat, lng: p.lng, ts }); }
+  $('rcMsg').textContent = `Marked: ${b.textContent.trim()}.`; await load(); renderRecover();
+};
+$('rcRes').onclick = async (e) => {
+  const b = e.target.closest('button[data-res]'); if (!b || !SHOTID) return;
+  await callQ('/api/scout/shot', { action: 'result', id: SHOTID, result: b.dataset.res });
+  const sh = ENTRIES.find((x) => x.id === SHOTID); if (sh) sh.result = b.dataset.res;
+  $('rcTagRow').hidden = b.dataset.res !== 'recovered'; await load(); renderRecover();
+};
+$('rcTag').onclick = async () => { SETTINGS = await call('/api/scout/settings', { tagsUsed: (Number(SETTINGS.tagsUsed) || 0) + 1 }); $('rcTagRow').hidden = true; $('rcMsg').textContent = `Counted. Tags left: ${Math.max(0, SETTINGS.tagsTotal - SETTINGS.tagsUsed)}.`; renderSeason(); };
+
+show(location.hash.slice(1)); load(); loadSettings(); updateQ(); flushQ(); setInterval(load, 15000); setInterval(flushQ, 20000);
+</script>
+</body>
+</html>
