@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a1c"/><stop offset="1" stop-color="#19130e"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#wood)"/>
+  <g fill="none" stroke-linecap="round">
+    <circle cx="256" cy="300" r="190" stroke="#E0A83C" stroke-width="14" opacity=".9"/>
+    <circle cx="256" cy="300" r="136" stroke="#F4E9D6" stroke-width="12" opacity=".35"/>
+    <circle cx="256" cy="300" r="82" stroke="#E0A83C" stroke-width="12" opacity=".9"/>
+  </g>
+  <g fill="#F4E9D6" stroke="#F4E9D6">
+    <g fill="none" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+      <g id="antler">
+        <path d="M226 214C214 172 190 140 174 92"/>
+        <path d="M202 150C182 142 162 132 146 112"/>
+        <path d="M216 182C240 164 246 140 242 112"/>
+        <path d="M188 118C176 108 170 96 168 80"/>
+      </g>
+      <use href="#antler" transform="translate(512 0) scale(-1 1)"/>
+    </g>
+    <path stroke="none" d="M256 200C300 200 322 235 316 275C312 310 292 350 280 385C276 398 268 404 256 404C244 404 236 398 232 385C220 350 200 310 196 275C190 235 212 200 256 200Z"/>
+    <path stroke="none" d="M200 238C160 215 120 225 96 250C130 268 170 268 200 258Z"/>
+    <path stroke="none" d="M312 238C352 215 392 225 416 250C382 268 342 268 312 258Z"/>
+  </g>
+  <g fill="#19130e">
+    <circle cx="228" cy="270" r="8"/><circle cx="284" cy="270" r="8"/>
+    <ellipse cx="256" cy="394" rx="13" ry="9"/>
+  </g>
+  <circle cx="256" cy="300" r="24" fill="#C0392B" opacity=".0"/>
+</svg>

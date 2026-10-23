@@ -1,3 +1,5 @@
+<p align="center"><img src="public/icon.svg" width="140" alt="CabinScout icon"></p>
+
 # CabinScout
 
 A free, self-hosted whitetail scouting board for your own land. Map your property, log sightings and trail-cam photos, see how wind and thermals will carry your scent around each stand, and keep a scouting and hunt log, all on your own computer.
